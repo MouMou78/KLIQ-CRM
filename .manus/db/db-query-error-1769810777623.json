@@ -1,0 +1,8 @@
+{
+  "query": "CREATE TABLE events (\n\tid varchar(36) NOT NULL PRIMARY KEY,\n\ttenantId varchar(36) NOT NULL,\n\tname text NOT NULL,\n\tslug varchar(100) NOT NULL,\n\tstartsAt timestamp,\n\tendsAt timestamp,\n\tformSchema json,\n\tdefaultIntent text NOT NULL DEFAULT 'warm_intro',\n\tdefaultTags json,\n\tcreatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n\tUNIQUE KEY tenant_slug_unique (tenantId, slug)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2QkRhwd4AVTLhHG.a0950ca1ba2f --database TQEsx2HByTQrcAiUBn2kww --execute CREATE TABLE events (\n\tid varchar(36) NOT NULL PRIMARY KEY,\n\ttenantId varchar(36) NOT NULL,\n\tname text NOT NULL,\n\tslug varchar(100) NOT NULL,\n\tstartsAt timestamp,\n\tendsAt timestamp,\n\tformSchema json,\n\tdefaultIntent text NOT NULL DEFAULT 'warm_intro',\n\tdefaultTags json,\n\tcreatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n\tUNIQUE KEY tenant_slug_unique (tenantId, slug)\n);",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1101 (42000) at line 1: BLOB/TEXT/JSON column 'defaultIntent' can't have a default value"
+  ]
+}

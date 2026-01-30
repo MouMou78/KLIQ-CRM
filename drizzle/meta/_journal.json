@@ -1,5 +1,20 @@
 {
   "version": "7",
   "dialect": "mysql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1769810149918,
+      "tag": "0000_init_crm_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1769810289347,
+      "tag": "0001_add_user_name",
+      "breakpoints": true
+    }
+  ]
 }

@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE nextActions (\n\tid varchar(36) NOT NULL PRIMARY KEY,\n\ttenantId varchar(36) NOT NULL,\n\tthreadId varchar(36) NOT NULL,\n\tactionType text NOT NULL,\n\ttriggerType text NOT NULL,\n\ttriggerValue text NOT NULL,\n\tstatus enum('open','completed','cancelled') NOT NULL DEFAULT 'open',\n\tcreatedAt timestamp NOT NULL DEFAULT (now()),\n\tcompletedAt timestamp\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2QkRhwd4AVTLhHG.a0950ca1ba2f --database TQEsx2HByTQrcAiUBn2kww --execute CREATE TABLE nextActions (\n\tid varchar(36) NOT NULL PRIMARY KEY,\n\ttenantId varchar(36) NOT NULL,\n\tthreadId varchar(36) NOT NULL,\n\tactionType text NOT NULL,\n\ttriggerType text NOT NULL,\n\ttriggerValue text NOT NULL,\n\tstatus enum('open','completed','cancelled') NOT NULL DEFAULT 'open',\n\tcreatedAt timestamp NOT NULL DEFAULT (now()),\n\tcompletedAt timestamp\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 202
+}

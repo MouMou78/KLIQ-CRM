@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE integrations (\n\tid varchar(36) NOT NULL PRIMARY KEY,\n\ttenantId varchar(36) NOT NULL,\n\tprovider enum('google','amplemarket') NOT NULL,\n\tstatus enum('connected','disconnected','error') NOT NULL DEFAULT 'disconnected',\n\tconfig json,\n\toauthTokens json,\n\tlastSyncedAt timestamp,\n\tcreatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n\tUNIQUE KEY tenant_provider_unique (tenantId, provider)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2QkRhwd4AVTLhHG.a0950ca1ba2f --database TQEsx2HByTQrcAiUBn2kww --execute CREATE TABLE integrations (\n\tid varchar(36) NOT NULL PRIMARY KEY,\n\ttenantId varchar(36) NOT NULL,\n\tprovider enum('google','amplemarket') NOT NULL,\n\tstatus enum('connected','disconnected','error') NOT NULL DEFAULT 'disconnected',\n\tconfig json,\n\toauthTokens json,\n\tlastSyncedAt timestamp,\n\tcreatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n\tUNIQUE KEY tenant_provider_unique (tenantId, provider)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 190
+}

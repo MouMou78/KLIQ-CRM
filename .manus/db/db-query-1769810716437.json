@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE threads (\n\tid varchar(36) NOT NULL PRIMARY KEY,\n\ttenantId varchar(36) NOT NULL,\n\tpersonId varchar(36) NOT NULL,\n\tsource text NOT NULL,\n\tintent text NOT NULL,\n\tstatus enum('active','dormant','closed') NOT NULL DEFAULT 'active',\n\ttitle text,\n\tlastActivityAt timestamp,\n\tcreatedAt timestamp NOT NULL DEFAULT (now())\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2QkRhwd4AVTLhHG.a0950ca1ba2f --database TQEsx2HByTQrcAiUBn2kww --execute CREATE TABLE threads (\n\tid varchar(36) NOT NULL PRIMARY KEY,\n\ttenantId varchar(36) NOT NULL,\n\tpersonId varchar(36) NOT NULL,\n\tsource text NOT NULL,\n\tintent text NOT NULL,\n\tstatus enum('active','dormant','closed') NOT NULL DEFAULT 'active',\n\ttitle text,\n\tlastActivityAt timestamp,\n\tcreatedAt timestamp NOT NULL DEFAULT (now())\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 200
+}

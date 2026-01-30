@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE people (\n\tid varchar(36) NOT NULL PRIMARY KEY,\n\ttenantId varchar(36) NOT NULL,\n\tfullName text NOT NULL,\n\tprimaryEmail varchar(320) NOT NULL,\n\tsecondaryEmails json,\n\tcompanyName text,\n\troleTitle text,\n\tphone varchar(50),\n\ttags json,\n\tenrichmentSource text,\n\tenrichmentSnapshot json,\n\tenrichmentLastSyncedAt timestamp,\n\tcreatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n\tupdatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n\tUNIQUE KEY tenant_primary_email_unique (tenantId, primaryEmail)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2QkRhwd4AVTLhHG.a0950ca1ba2f --database TQEsx2HByTQrcAiUBn2kww --execute CREATE TABLE people (\n\tid varchar(36) NOT NULL PRIMARY KEY,\n\ttenantId varchar(36) NOT NULL,\n\tfullName text NOT NULL,\n\tprimaryEmail varchar(320) NOT NULL,\n\tsecondaryEmails json,\n\tcompanyName text,\n\troleTitle text,\n\tphone varchar(50),\n\ttags json,\n\tenrichmentSource text,\n\tenrichmentSnapshot json,\n\tenrichmentLastSyncedAt timestamp,\n\tcreatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n\tupdatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n\tUNIQUE KEY tenant_primary_email_unique (tenantId, primaryEmail)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 205
+}

@@ -1,0 +1,19 @@
+{
+  "query": "CREATE TABLE `people` (\n\t`id` varchar(36) NOT NULL,\n\t`tenantId` varchar(36) NOT NULL,\n\t`fullName` text NOT NULL,\n\t`primaryEmail` varchar(320) NOT NULL,\n\t`secondaryEmails` json DEFAULT ('[]'),\n\t`companyName` text,\n\t`roleTitle` text,\n\t`phone` varchar(50),\n\t`tags` json DEFAULT ('[]'),\n\t`enrichmentSource` text,\n\t`enrichmentSnapshot` json,\n\t`enrichmentLastSyncedAt` timestamp,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `people_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `tenant_primary_email_unique` UNIQUE(`tenantId`,`primaryEmail`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2QkRhwd4AVTLhHG.a0950ca1ba2f --database TQEsx2HByTQrcAiUBn2kww --execute CREATE TABLE `people` (\n\t`id` varchar(36) NOT NULL,\n\t`tenantId` varchar(36) NOT NULL,\n\t`fullName` text NOT NULL,\n\t`primaryEmail` varchar(320) NOT NULL,\n\t`secondaryEmails` json DEFAULT ('[]'),\n\t`companyName` text,\n\t`roleTitle` text,\n\t`phone` varchar(50),\n\t`tags` json DEFAULT ('[]'),\n\t`enrichmentSource` text,\n\t`enrichmentSnapshot` json,\n\t`enrichmentLastSyncedAt` timestamp,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `people_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `tenant_primary_email_unique` UNIQUE(`tenantId`,`primaryEmail`)\n);",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 6 column 38 near \"'[]'),",
+    "\t`companyName` text,",
+    "\t`roleTitle` text,",
+    "\t`phone` varchar(50),",
+    "\t`tags` json DEFAULT ('[]'),",
+    "\t`enrichmentSource` text,",
+    "\t`enrichmentSnapshot` json,",
+    "\t`enrichmentLastSyncedAt` timestamp,",
+    "\t`createdAt` timestamp NOT NULL DEFAULT (now()),",
+    "\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,",
+    "\tCONSTRAINT `people_id` PRIMARY KEY(`id`),",
+    "\tCONSTRAI"
+  ]
+}
