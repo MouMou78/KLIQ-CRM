@@ -132,3 +132,8 @@
 - [x] Create Analytics page with charts and metrics
 - [ ] Add user scope toggle to Home page (me/team)
 - [ ] Implement thread access control based on visibility
+
+## Logo Update
+- [x] Replace logo with new 1twenty Consultancy logo
+- [x] Remove app name text from sidebar
+- [x] Update DashboardLayout to show only logo image
