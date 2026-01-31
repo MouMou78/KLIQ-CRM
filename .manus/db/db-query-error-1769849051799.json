@@ -1,0 +1,8 @@
+{
+  "query": "ALTER TABLE `moments` ADD `externalId` varchar(255);\nALTER TABLE `moments` ADD `externalSource` varchar(50);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2QkRhwd4AVTLhHG.a0950ca1ba2f --database TQEsx2HByTQrcAiUBn2kww --execute ALTER TABLE `moments` ADD `externalId` varchar(255);\nALTER TABLE `moments` ADD `externalSource` varchar(50);",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1060 (42S21) at line 1: Duplicate column name 'externalId'"
+  ]
+}

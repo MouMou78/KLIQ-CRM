@@ -190,3 +190,231 @@ export async function enrichPersonWithApollo(tenantId: string, personId: string)
 
   return { success: true, enrichedData: apolloData };
 }
+
+export async function syncApolloEngagements(tenantId: string, userId: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Get integration
+  const [integration] = await db
+    .select()
+    .from(integrations)
+    .where(and(eq(integrations.tenantId, tenantId), eq(integrations.provider, "apollo")))
+    .limit(1);
+
+  if (!integration || integration.status !== "connected") {
+    throw new Error("Apollo integration not connected");
+  }
+
+  const apiKey = (integration.config as any)?.apiKey;
+  if (!apiKey) throw new Error("Apollo API key not found");
+
+  let totalSynced = 0;
+
+  // Sync calls
+  const callsSynced = await syncApolloCalls(db, tenantId, userId, apiKey);
+  totalSynced += callsSynced;
+
+  // Sync emails
+  const emailsSynced = await syncApolloEmails(db, tenantId, userId, apiKey);
+  totalSynced += emailsSynced;
+
+  // Update last synced timestamp
+  await db
+    .update(integrations)
+    .set({ lastSyncedAt: new Date() })
+    .where(and(eq(integrations.tenantId, tenantId), eq(integrations.provider, "apollo")));
+
+  return { totalSynced, callsSynced, emailsSynced };
+}
+
+async function syncApolloCalls(db: any, tenantId: string, userId: string, apiKey: string) {
+  try {
+    // Search for calls from the last 30 days
+    const response = await axios.get(`${APOLLO_API_BASE}/calls/search`, {
+      headers: { "X-Api-Key": apiKey },
+      params: {
+        per_page: 100,
+        page: 1,
+      },
+    });
+
+    const calls = response.data.calls || [];
+    let syncedCount = 0;
+
+    for (const call of calls) {
+      // Find person by email or phone
+      const contactEmail = call.contact?.email;
+      if (!contactEmail) continue;
+
+      const [person] = await db
+        .select()
+        .from(people)
+        .where(and(eq(people.tenantId, tenantId), eq(people.primaryEmail, contactEmail)))
+        .limit(1);
+
+      if (!person) continue;
+
+      // Find or create thread
+      let [thread] = await db
+        .select()
+        .from(threads)
+        .where(and(eq(threads.tenantId, tenantId), eq(threads.personId, person.id)))
+        .limit(1);
+
+      if (!thread) {
+        const threadId = nanoid();
+        await db.insert(threads).values({
+          id: threadId,
+          tenantId,
+          personId: person.id,
+          intent: "outbound",
+          ownerUserId: userId,
+          visibility: "team",
+        });
+
+        [thread] = await db
+          .select()
+          .from(threads)
+          .where(eq(threads.id, threadId))
+          .limit(1);
+      }
+
+      // Check if moment already exists
+      const existingMoment = await db
+        .select()
+        .from(moments)
+        .where(
+          and(
+            eq(moments.threadId, thread.id),
+            eq(moments.externalId, `apollo-call-${call.id}`)
+          )
+        )
+        .limit(1);
+
+      if (existingMoment.length === 0) {
+        // Create moment for call
+        await db.insert(moments).values({
+          id: nanoid(),
+          tenantId,
+          threadId: thread.id,
+          personId: person.id,
+          source: "apollo",
+          type: "call_completed",
+          timestamp: new Date(call.created_at || call.occurred_at),
+          metadata: {
+            summary: `Call: ${call.disposition || "Completed"}`,
+            body: call.note || `Duration: ${call.duration || 0}s`,
+          },
+          externalId: `apollo-call-${call.id}`,
+          externalSource: "apollo",
+        });
+        syncedCount++;
+      }
+    }
+
+    return syncedCount;
+  } catch (error) {
+    console.error("Error syncing Apollo calls:", error);
+    return 0;
+  }
+}
+
+async function syncApolloEmails(db: any, tenantId: string, userId: string, apiKey: string) {
+  try {
+    // Search for outreach emails from the last 30 days
+    const response = await axios.get(`${APOLLO_API_BASE}/emailer_campaigns/email_statuses`, {
+      headers: { "X-Api-Key": apiKey },
+      params: {
+        per_page: 100,
+        page: 1,
+      },
+    });
+
+    const emails = response.data.email_statuses || [];
+    let syncedCount = 0;
+
+    for (const email of emails) {
+      // Find person by email
+      const contactEmail = email.contact?.email;
+      if (!contactEmail) continue;
+
+      const [person] = await db
+        .select()
+        .from(people)
+        .where(and(eq(people.tenantId, tenantId), eq(people.primaryEmail, contactEmail)))
+        .limit(1);
+
+      if (!person) continue;
+
+      // Find or create thread
+      let [thread] = await db
+        .select()
+        .from(threads)
+        .where(and(eq(threads.tenantId, tenantId), eq(threads.personId, person.id)))
+        .limit(1);
+
+      if (!thread) {
+        const threadId = nanoid();
+        await db.insert(threads).values({
+          id: threadId,
+          tenantId,
+          personId: person.id,
+          intent: "outbound",
+          ownerUserId: userId,
+          visibility: "team",
+        });
+
+        [thread] = await db
+          .select()
+          .from(threads)
+          .where(eq(threads.id, threadId))
+          .limit(1);
+      }
+
+      // Check if moment already exists
+      const existingMoment = await db
+        .select()
+        .from(moments)
+        .where(
+          and(
+            eq(moments.threadId, thread.id),
+            eq(moments.externalId, `apollo-email-${email.id}`)
+          )
+        )
+        .limit(1);
+
+      if (existingMoment.length === 0) {
+        // Determine email type based on status
+        const momentType = email.status === "sent" || email.status === "delivered" 
+          ? "email_outbound" 
+          : email.status === "opened" || email.status === "clicked"
+          ? "email_inbound"
+          : "email_outbound";
+
+        // Create moment for email
+        await db.insert(moments).values({
+          id: nanoid(),
+          tenantId,
+          threadId: thread.id,
+          personId: person.id,
+          source: "apollo",
+          type: momentType === "email_inbound" ? "email_received" : "email_sent",
+          timestamp: new Date(email.sent_at || email.created_at),
+          metadata: {
+            summary: email.subject || "Email sent",
+            body: `Status: ${email.status}${email.opened_at ? ` | Opened: ${new Date(email.opened_at).toLocaleString()}` : ""}`,
+          },
+          externalId: `apollo-email-${email.id}`,
+          externalSource: "apollo",
+        });
+        syncedCount++;
+      }
+    }
+
+    return syncedCount;
+  } catch (error) {
+    console.error("Error syncing Apollo emails:", error);
+    return 0;
+  }
+}

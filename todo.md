@@ -178,6 +178,11 @@
 - [x] Build Apollo connection endpoint with API key
 - [x] Implement contact sync from Apollo
 - [x] Implement data enrichment for people
-- [ ] Add engagement tracking (emails, calls, sequences)
+- [x] Add engagement tracking (emails, calls, sequences)
+- [x] Sync email sequences from Apollo as moments
+- [x] Sync call logs from Apollo as moments
+- [x] Sync engagement activities from Apollo as moments
+- [x] Add engagement sync button to Apollo integration card
 - [x] Create Apollo integration card in UI
-- [ ] Test Apollo connection and sync
+- [x] Test Apollo connection and sync
+- [x] Test engagement tracking with sample data

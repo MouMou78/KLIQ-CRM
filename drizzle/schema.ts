@@ -99,6 +99,8 @@ export const moments = mysqlTable("moments", {
   ]).notNull(),
   timestamp: timestamp("timestamp").notNull(),
   metadata: json("metadata").$type<Record<string, any>>().default({}),
+  externalId: varchar("externalId", { length: 255 }),
+  externalSource: varchar("externalSource", { length: 50 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({
   tenantThreadTimestampIdx: index("tenant_thread_timestamp_idx").on(table.tenantId, table.threadId, table.timestamp),

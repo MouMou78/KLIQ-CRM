@@ -534,6 +534,12 @@ export const appRouter = router({
         const { enrichPersonWithApollo } = await import("./apollo");
         return enrichPersonWithApollo(ctx.user.tenantId, input.personId);
       }),
+    
+    syncApolloEngagements: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        const { syncApolloEngagements } = await import("./apollo");
+        return syncApolloEngagements(ctx.user.tenantId, ctx.user.id);
+      }),
   }),
 });
 

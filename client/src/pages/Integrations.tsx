@@ -41,6 +41,15 @@ export default function Integrations() {
       toast.error("Failed to sync Apollo contacts");
     },
   });
+  
+  const syncApolloEngagements = trpc.integrations.syncApolloEngagements.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Synced ${data.totalSynced} engagements (${data.callsSynced} calls, ${data.emailsSynced} emails)`);
+    },
+    onError: () => {
+      toast.error("Failed to sync Apollo engagements");
+    },
+  });
 
   const handleConnectAmplemarket = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -235,14 +244,25 @@ export default function Integrations() {
                 </div>
 
                 {apolloIntegration?.status === "connected" ? (
-                  <Button 
-                    className="w-full" 
-                    onClick={() => syncApolloContacts.mutate()}
-                    disabled={syncApolloContacts.isPending}
-                  >
-                    {syncApolloContacts.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                    Sync Contacts
-                  </Button>
+                  <div className="space-y-2">
+                    <Button 
+                      className="w-full" 
+                      onClick={() => syncApolloContacts.mutate()}
+                      disabled={syncApolloContacts.isPending}
+                    >
+                      {syncApolloContacts.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                      Sync Contacts
+                    </Button>
+                    <Button 
+                      className="w-full" 
+                      variant="outline"
+                      onClick={() => syncApolloEngagements.mutate()}
+                      disabled={syncApolloEngagements.isPending}
+                    >
+                      {syncApolloEngagements.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                      Sync Engagements (Calls & Emails)
+                    </Button>
+                  </div>
                 ) : (
                   <form onSubmit={handleConnectApollo} className="space-y-3">
                     <div>
