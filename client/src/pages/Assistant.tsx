@@ -26,10 +26,17 @@ export default function Assistant() {
     {
       id: "welcome",
       role: "assistant",
-      content: "Hello! I'm your CRM assistant. I can help you understand your pipeline, find deals at risk, check on overdue actions, and answer questions about your contacts and threads.\n\nTry asking:\n- \"Show me deals at risk\"\n- \"What's my pipeline health?\"\n- \"Which contacts need follow-up?\"\n- \"How many deals are in each stage?\"",
+      content: "Hello! I'm your CRM assistant. Ask me about your pipeline, deals, or contacts.",
       timestamp: new Date(),
     },
   ]);
+
+  const quickActions = [
+    "Show me deals at risk",
+    "What's my pipeline health?",
+    "Which contacts need follow-up?",
+    "How many deals are in each stage?",
+  ];
   const [input, setInput] = useState("");
   const [, setLocation] = useLocation();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -96,8 +103,35 @@ export default function Assistant() {
         </p>
       </div>
 
-      <Card className="flex-1 flex flex-col overflow-hidden">
-        <ScrollArea className="flex-1 p-6" ref={scrollRef}>
+      {messages.length === 1 && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {quickActions.map((action) => (
+            <Button
+              key={action}
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setInput(action);
+                const userMessage: Message = {
+                  id: Date.now().toString(),
+                  role: "user",
+                  content: action,
+                  timestamp: new Date(),
+                };
+                setMessages((prev) => [...prev, userMessage]);
+                queryMutation.mutate({ query: action });
+              }}
+              disabled={queryMutation.isPending}
+              className="text-xs"
+            >
+              {action}
+            </Button>
+          ))}
+        </div>
+      )}
+
+      <Card className="flex-1 flex flex-col overflow-hidden min-h-0">
+        <ScrollArea className="flex-1 p-6 h-full" ref={scrollRef}>
           <div className="space-y-6">
             {messages.map((message) => (
               <div

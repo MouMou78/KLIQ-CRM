@@ -31,6 +31,7 @@ export default function Integrations() {
 
   const googleIntegration = integrations?.find((i) => i.provider === "google");
   const amplemarketIntegration = integrations?.find((i) => i.provider === "amplemarket");
+  const whatsappIntegration = integrations?.find((i) => i.provider === "whatsapp");
 
   return (
     <div className="space-y-6">
@@ -165,6 +166,50 @@ export default function Integrations() {
                     </p>
                   </div>
                 )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>WhatsApp Business</CardTitle>
+                  <CardDescription>WhatsApp message sync</CardDescription>
+                </div>
+                {whatsappIntegration?.status === "connected" ? (
+                  <Badge variant="default" className="gap-1">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Connected
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary" className="gap-1">
+                    <XCircle className="w-3 h-3" />
+                    Disconnected
+                  </Badge>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Sync WhatsApp Business conversations directly into your CRM as moments.
+                </p>
+                
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Features:</p>
+                  <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                    <li>Message sync (incoming/outgoing)</li>
+                    <li>Automatic moment creation</li>
+                    <li>Send messages from CRM</li>
+                    <li>Conversation threading</li>
+                  </ul>
+                </div>
+
+                <Button className="w-full" variant="outline" disabled>
+                  <LinkIcon className="w-4 h-4 mr-2" />
+                  Connect WhatsApp (Coming Soon)
+                </Button>
               </div>
             </CardContent>
           </Card>
