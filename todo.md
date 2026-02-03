@@ -216,3 +216,9 @@
 - [x] Add linked account information to person detail
 - [x] Add navigation links to Amplemarket pages
 - [x] Test Amplemarket sync with all fields
+
+## Amplemarket Navigation
+- [x] Add Amplemarket section to sidebar navigation
+- [x] Add "Amplemarket Accounts" link to sidebar
+- [x] Add "Amplemarket People" link to sidebar
+- [x] Test sidebar navigation to Amplemarket pages
