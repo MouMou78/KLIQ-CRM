@@ -98,7 +98,16 @@ export const appRouter = router({
         }
         
         const threads = await db.getThreadsByPerson(ctx.user.tenantId, input.id);
-        return { person, threads };
+        
+        // Get all moments for this person's threads for email timeline
+        const threadsWithMoments = await Promise.all(
+          threads.map(async (thread) => {
+            const moments = await db.getMomentsByThread(ctx.user.tenantId, thread.id);
+            return { ...thread, moments };
+          })
+        );
+        
+        return { person, threads: threadsWithMoments };
       }),
     
     create: protectedProcedure
@@ -115,6 +124,68 @@ export const appRouter = router({
           tenantId: ctx.user.tenantId,
           ...input,
         });
+      }),
+    
+    bulkImport: protectedProcedure
+      .input(z.object({
+        contacts: z.array(z.object({
+          fullName: z.string(),
+          firstName: z.string().optional(),
+          lastName: z.string().optional(),
+          primaryEmail: z.string().email(),
+          companyName: z.string().optional(),
+          roleTitle: z.string().optional(),
+          phone: z.string().optional(),
+          linkedinUrl: z.string().optional(),
+          city: z.string().optional(),
+          state: z.string().optional(),
+          country: z.string().optional(),
+        })),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const tenantId = ctx.user.tenantId;
+        let success = 0;
+        let failed = 0;
+        let duplicates = 0;
+        const errors: string[] = [];
+        
+        // Get existing emails to check for duplicates
+        const existingPeople = await db.getPeopleByTenant(tenantId);
+        const existingEmails = new Set(existingPeople.map(p => p.primaryEmail.toLowerCase()));
+        
+        for (const contact of input.contacts) {
+          try {
+            // Check for duplicate
+            if (existingEmails.has(contact.primaryEmail.toLowerCase())) {
+              duplicates++;
+              continue;
+            }
+            
+            // Create person
+            await db.createPerson({
+              tenantId,
+              fullName: contact.fullName,
+              firstName: contact.firstName,
+              lastName: contact.lastName,
+              primaryEmail: contact.primaryEmail,
+              companyName: contact.companyName,
+              roleTitle: contact.roleTitle,
+              phone: contact.phone,
+              linkedinUrl: contact.linkedinUrl,
+              city: contact.city,
+              state: contact.state,
+              country: contact.country,
+            });
+            
+            existingEmails.add(contact.primaryEmail.toLowerCase());
+            success++;
+          } catch (error: any) {
+            failed++;
+            errors.push(`${contact.primaryEmail}: ${error.message}`);
+          }
+        }
+        
+        return { success, failed, duplicates, errors };
       }),
   }),
   
@@ -527,6 +598,24 @@ export const appRouter = router({
       .query(async ({ input, ctx }) => {
         const people = await db.getPeopleByTenant(ctx.user.tenantId);
         return people.filter((p: any) => p.accountId === input.accountId);
+      }),
+  }),
+  
+  automation: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      // Return empty array for now - rules are hardcoded in UI
+      return [];
+    }),
+    
+    toggle: protectedProcedure
+      .input(z.object({
+        ruleId: z.string(),
+        status: z.enum(["active", "paused"]),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        // For now, just return success
+        // In a real implementation, this would update the rule in the database
+        return { success: true };
       }),
   }),
   

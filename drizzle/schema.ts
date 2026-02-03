@@ -232,3 +232,126 @@ export const integrations = mysqlTable("integrations", {
 
 export type Integration = typeof integrations.$inferSelect;
 export type InsertIntegration = typeof integrations.$inferInsert;
+
+// Email Sequences
+export const emailSequences = mysqlTable("emailSequences", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenantId", { length: 36 }).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  status: mysqlEnum("status", ["active", "paused", "archived"]).default("active").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  tenantStatusIdx: index("tenant_status_idx").on(table.tenantId, table.status),
+}));
+
+export type EmailSequence = typeof emailSequences.$inferSelect;
+export type InsertEmailSequence = typeof emailSequences.$inferInsert;
+
+export const emailSequenceSteps = mysqlTable("emailSequenceSteps", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  sequenceId: varchar("sequenceId", { length: 36 }).notNull(),
+  stepNumber: int("stepNumber").notNull(),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  delayDays: int("delayDays").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  sequenceStepIdx: index("sequence_step_idx").on(table.sequenceId, table.stepNumber),
+}));
+
+export type EmailSequenceStep = typeof emailSequenceSteps.$inferSelect;
+export type InsertEmailSequenceStep = typeof emailSequenceSteps.$inferInsert;
+
+export const emailSequenceEnrollments = mysqlTable("emailSequenceEnrollments", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenantId", { length: 36 }).notNull(),
+  sequenceId: varchar("sequenceId", { length: 36 }).notNull(),
+  personId: varchar("personId", { length: 36 }).notNull(),
+  threadId: varchar("threadId", { length: 36 }),
+  currentStep: int("currentStep").notNull().default(0),
+  status: mysqlEnum("status", ["active", "completed", "paused", "unsubscribed"]).default("active").notNull(),
+  enrolledAt: timestamp("enrolledAt").defaultNow().notNull(),
+  completedAt: timestamp("completedAt"),
+  lastEmailSentAt: timestamp("lastEmailSentAt"),
+  nextEmailScheduledAt: timestamp("nextEmailScheduledAt"),
+  totalOpens: int("totalOpens").notNull().default(0),
+  totalReplies: int("totalReplies").notNull().default(0),
+}, (table) => ({
+  tenantSequenceIdx: index("tenant_sequence_idx").on(table.tenantId, table.sequenceId),
+  tenantPersonIdx: index("tenant_person_idx").on(table.tenantId, table.personId),
+  tenantStatusIdx: index("tenant_status_idx").on(table.tenantId, table.status),
+  tenantScheduledIdx: index("tenant_scheduled_idx").on(table.tenantId, table.nextEmailScheduledAt),
+}));
+
+export type EmailSequenceEnrollment = typeof emailSequenceEnrollments.$inferSelect;
+export type InsertEmailSequenceEnrollment = typeof emailSequenceEnrollments.$inferInsert;
+
+export const emailSequenceEvents = mysqlTable("emailSequenceEvents", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  enrollmentId: varchar("enrollmentId", { length: 36 }).notNull(),
+  stepNumber: int("stepNumber").notNull(),
+  eventType: mysqlEnum("eventType", ["sent", "opened", "replied", "bounced", "unsubscribed"]).notNull(),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  metadata: json("metadata").$type<Record<string, any>>().default({}),
+}, (table) => ({
+  enrollmentTimestampIdx: index("enrollment_timestamp_idx").on(table.enrollmentId, table.timestamp),
+  enrollmentStepIdx: index("enrollment_step_idx").on(table.enrollmentId, table.stepNumber),
+}));
+
+export type EmailSequenceEvent = typeof emailSequenceEvents.$inferSelect;
+export type InsertEmailSequenceEvent = typeof emailSequenceEvents.$inferInsert;
+
+// Pipeline Automation
+export const automationRules = mysqlTable("automationRules", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenantId", { length: 36 }).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  triggerType: mysqlEnum("triggerType", [
+    "email_opened",
+    "email_replied",
+    "no_reply_after_days",
+    "meeting_held",
+    "stage_entered",
+    "deal_value_threshold"
+  ]).notNull(),
+  triggerConfig: json("triggerConfig").$type<Record<string, any>>().default({}),
+  actionType: mysqlEnum("actionType", [
+    "move_stage",
+    "send_notification",
+    "create_task",
+    "enroll_sequence",
+    "update_field"
+  ]).notNull(),
+  actionConfig: json("actionConfig").$type<Record<string, any>>().default({}),
+  status: mysqlEnum("status", ["active", "paused"]).default("active").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  tenantStatusIdx: index("tenant_status_idx").on(table.tenantId, table.status),
+  tenantTriggerIdx: index("tenant_trigger_idx").on(table.tenantId, table.triggerType),
+}));
+
+export type AutomationRule = typeof automationRules.$inferSelect;
+export type InsertAutomationRule = typeof automationRules.$inferInsert;
+
+export const automationExecutions = mysqlTable("automationExecutions", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenantId", { length: 36 }).notNull(),
+  ruleId: varchar("ruleId", { length: 36 }).notNull(),
+  threadId: varchar("threadId", { length: 36 }),
+  personId: varchar("personId", { length: 36 }),
+  status: mysqlEnum("status", ["success", "failed", "skipped"]).notNull(),
+  executedAt: timestamp("executedAt").defaultNow().notNull(),
+  errorMessage: text("errorMessage"),
+  metadata: json("metadata").$type<Record<string, any>>().default({}),
+}, (table) => ({
+  tenantRuleIdx: index("tenant_rule_idx").on(table.tenantId, table.ruleId),
+  tenantThreadIdx: index("tenant_thread_idx").on(table.tenantId, table.threadId),
+  tenantExecutedIdx: index("tenant_executed_idx").on(table.tenantId, table.executedAt),
+}));
+
+export type AutomationExecution = typeof automationExecutions.$inferSelect;
+export type InsertAutomationExecution = typeof automationExecutions.$inferInsert;

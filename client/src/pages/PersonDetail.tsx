@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Mail, Phone, Building, Briefcase, Plus, MapPin, ExternalLink, TrendingUp, CheckCircle2 } from "lucide-react";
 import { Link } from "wouter";
+import { EmailActivityTimeline } from "@/components/EmailActivityTimeline";
 
 interface PersonDetailProps {
   personId: string;
@@ -58,6 +59,20 @@ export default function PersonDetail({ personId }: PersonDetailProps) {
           New Thread
         </Button>
       </div>
+
+      {/* Email Activity Timeline */}
+      <EmailActivityTimeline 
+        activities={threads.flatMap(thread => 
+          thread.moments?.filter(m => 
+            m.type === 'email_sent' || m.type === 'email_received' || m.type === 'reply_received'
+          ).map(m => ({
+            id: m.id,
+            type: m.type as 'email_sent' | 'email_received' | 'reply_received',
+            timestamp: new Date(m.timestamp),
+            metadata: m.metadata as any
+          })) || []
+        )}
+      />
 
       <div className="grid gap-6 md:grid-cols-3">
         <Card className="md:col-span-1">

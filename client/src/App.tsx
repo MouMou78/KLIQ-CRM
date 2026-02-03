@@ -20,6 +20,8 @@ import AmplemarketAccounts from "./pages/AmplemarketAccounts";
 import AmplemarketPeople from "./pages/AmplemarketPeople";
 import AccountDetail from "./pages/AccountDetail";
 import Demo from "./pages/Demo";
+import BulkImport from "./pages/BulkImport";
+import Automation from "./pages/Automation";
 import DashboardLayout from "./components/DashboardLayout";
 
 function Router() {
@@ -38,6 +40,12 @@ function Router() {
       <Route path="/people">
         <DashboardLayout>
           <People />
+        </DashboardLayout>
+      </Route>
+      
+      <Route path="/people/import">
+        <DashboardLayout>
+          <BulkImport />
         </DashboardLayout>
       </Route>
       
@@ -106,6 +114,12 @@ function Router() {
       <Route path="/funnel">
         <DashboardLayout>
           <Funnel />
+        </DashboardLayout>
+      </Route>
+      
+      <Route path="/automation">
+        <DashboardLayout>
+          <Automation />
         </DashboardLayout>
       </Route>
       

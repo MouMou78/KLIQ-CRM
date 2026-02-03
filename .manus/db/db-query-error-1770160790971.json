@@ -1,0 +1,10 @@
+{
+  "query": "CREATE TABLE `automationExecutions` (\n\t`id` varchar(36) NOT NULL,\n\t`tenantId` varchar(36) NOT NULL,\n\t`ruleId` varchar(36) NOT NULL,\n\t`threadId` varchar(36),\n\t`personId` varchar(36),\n\t`status` enum('success','failed','skipped') NOT NULL,\n\t`executedAt` timestamp NOT NULL DEFAULT (now()),\n\t`errorMessage` text,\n\t`metadata` json DEFAULT ('{}'),\n\tCONSTRAINT `automationExecutions_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2QkRhwd4AVTLhHG.a0950ca1ba2f --database TQEsx2HByTQrcAiUBn2kww --execute CREATE TABLE `automationExecutions` (\n\t`id` varchar(36) NOT NULL,\n\t`tenantId` varchar(36) NOT NULL,\n\t`ruleId` varchar(36) NOT NULL,\n\t`threadId` varchar(36),\n\t`personId` varchar(36),\n\t`status` enum('success','failed','skipped') NOT NULL,\n\t`executedAt` timestamp NOT NULL DEFAULT (now()),\n\t`errorMessage` text,\n\t`metadata` json DEFAULT ('{}'),\n\tCONSTRAINT `automationExecutions_id` PRIMARY KEY(`id`)\n);",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 10 column 31 near \"'{}'),",
+    "\tCONSTRAINT `automationExecutions_id` PRIMARY KEY(`id`)",
+    ")\""
+  ]
+}

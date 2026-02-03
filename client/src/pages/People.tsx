@@ -5,6 +5,8 @@ import { Loader2, Search } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
 import { AddPersonDialog } from "@/components/AddPersonDialog";
+import { Button } from "@/components/ui/button";
+import { Upload } from "lucide-react";
 
 export default function People() {
   const { data: people, isLoading } = trpc.people.list.useQuery();
@@ -25,7 +27,15 @@ export default function People() {
             Manage your contacts and relationships
           </p>
         </div>
-        <AddPersonDialog />
+        <div className="flex gap-2">
+          <Link href="/people/import">
+            <Button variant="outline">
+              <Upload className="w-4 h-4 mr-2" />
+              Import
+            </Button>
+          </Link>
+          <AddPersonDialog />
+        </div>
       </div>
 
       <Card>
