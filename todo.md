@@ -281,3 +281,11 @@
 - [ ] Add Decision Makers table
 - [ ] Add Activity timeline
 - [ ] Link from Amplemarket Accounts list
+
+## Critical Bug Fixes
+- [x] Fix demo clear SQL error (JSON_CONTAINS syntax issue with threads table)
+- [x] Replace demo data with obviously fake names (not real people)
+- [x] Replace LinkedIn URLs with fake URLs (not real LinkedIn profiles)
+- [x] Make dashboard cards clickable (Today's Actions, Waiting On, Active Contacts)
+- [x] Improve mobile portrait layout for all pages
+- [x] Test demo clear functionality after SQL fix

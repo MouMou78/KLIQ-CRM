@@ -52,7 +52,7 @@ export default function AccountDetail() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container py-4">
+        <div className="container py-3 md:py-4 px-4">
           <Button
             variant="ghost"
             size="sm"
@@ -64,13 +64,13 @@ export default function AccountDetail() {
           </Button>
 
           <div className="flex items-start justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-primary/10">
-                <Building2 className="h-8 w-8 text-primary" />
+            <div className="flex items-center gap-3 md:gap-4">
+              <div className="flex h-12 w-12 md:h-16 md:w-16 items-center justify-center rounded-lg bg-primary/10">
+                <Building2 className="h-6 w-6 md:h-8 md:w-8 text-primary" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold">{account.name}</h1>
-                <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                <h1 className="text-xl md:text-2xl font-bold">{account.name}</h1>
+                <div className="flex flex-wrap items-center gap-2 md:gap-4 mt-1 md:mt-2 text-xs md:text-sm text-muted-foreground">
                   {account.industry && (
                     <span className="flex items-center gap-1">
                       <Badge variant="secondary">{account.industry}</Badge>
@@ -95,8 +95,8 @@ export default function AccountDetail() {
         </div>
       </div>
 
-      <div className="container py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="container py-4 md:py-6 px-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
           {/* Sidebar - Company Overview */}
           <div className="lg:col-span-1 space-y-6">
             <Card className="p-6">
@@ -185,13 +185,13 @@ export default function AccountDetail() {
           {/* Main Content */}
           <div className="lg:col-span-2">
             <Tabs defaultValue="contacts" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="contacts">Contacts</TabsTrigger>
-                <TabsTrigger value="activity">Activity</TabsTrigger>
-                <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-3 h-auto">
+                <TabsTrigger value="contacts" className="text-xs md:text-sm py-2">Contacts</TabsTrigger>
+                <TabsTrigger value="activity" className="text-xs md:text-sm py-2">Activity</TabsTrigger>
+                <TabsTrigger value="overview" className="text-xs md:text-sm py-2">Overview</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="contacts" className="mt-6">
+              <TabsContent value="contacts" className="mt-4 md:mt-6">
                 <Card>
                   <div className="p-6">
                     <h3 className="font-semibold mb-4">Decision Makers</h3>

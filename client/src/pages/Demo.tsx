@@ -46,15 +46,15 @@ export default function Demo() {
   const isLoading = generateMutation.isPending || clearMutation.isPending;
   
   return (
-    <div className="container py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Demo Environment</h1>
-        <p className="text-muted-foreground mt-2">
+    <div className="container py-4 md:py-8 px-4">
+      <div className="mb-4 md:mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold">Demo Environment</h1>
+        <p className="text-sm md:text-base text-muted-foreground mt-1 md:mt-2">
           Generate sample data to explore the CRM features without affecting your production data.
         </p>
       </div>
       
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

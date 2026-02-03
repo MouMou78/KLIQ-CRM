@@ -17,11 +17,11 @@ export default function People() {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 md:space-y-6 p-4 md:p-0">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">People</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">People</h1>
+          <p className="text-sm md:text-base text-muted-foreground mt-1 md:mt-2">
             Manage your contacts and relationships
           </p>
         </div>
@@ -56,21 +56,21 @@ export default function People() {
             <div className="space-y-2">
               {filteredPeople.map((person) => (
                 <Link key={person.id} href={`/people/${person.id}`}>
-                  <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent cursor-pointer transition-colors">
-                    <div className="flex-1">
+                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-3 md:p-4 border rounded-lg hover:bg-accent cursor-pointer transition-colors gap-2 md:gap-0">
+                    <div className="flex-1 w-full md:w-auto">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                           <span className="text-sm font-medium text-primary">
                             {person.fullName.charAt(0).toUpperCase()}
                           </span>
                         </div>
-                        <div>
-                          <p className="font-medium">{person.fullName}</p>
-                          <p className="text-sm text-muted-foreground">{person.primaryEmail}</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium truncate">{person.fullName}</p>
+                          <p className="text-xs md:text-sm text-muted-foreground truncate">{person.primaryEmail}</p>
                         </div>
                       </div>
                     </div>
-                    <div className="text-right space-y-1">
+                    <div className="text-left md:text-right space-y-1 w-full md:w-auto pl-13 md:pl-0">
                       {person.companyName && (
                         <p className="text-sm font-medium">{person.companyName}</p>
                       )}

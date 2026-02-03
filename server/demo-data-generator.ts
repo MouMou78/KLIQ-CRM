@@ -4,18 +4,18 @@ import { people, threads, moments, nextActions } from "../drizzle/schema";
 import { eq, and, like, inArray, sql } from "drizzle-orm";
 
 const DEMO_COMPANIES = [
-  { name: "Acme Corp", domain: "acme.com", industry: "Technology", employees: "50-200", revenue: "$5M-$10M" },
-  { name: "TechStart Inc", domain: "techstart.io", industry: "Software", employees: "10-50", revenue: "$1M-$5M" },
-  { name: "Global Solutions", domain: "globalsolutions.com", industry: "Consulting", employees: "200-500", revenue: "$10M-$50M" },
-  { name: "Innovate Labs", domain: "innovatelabs.com", industry: "R&D", employees: "10-50", revenue: "$1M-$5M" },
-  { name: "DataFlow Systems", domain: "dataflow.io", industry: "Data Analytics", employees: "50-200", revenue: "$5M-$10M" },
-  { name: "CloudNine Services", domain: "cloudnine.com", industry: "Cloud Computing", employees: "100-500", revenue: "$10M-$50M" },
-  { name: "NextGen Marketing", domain: "nextgenmarketing.com", industry: "Marketing", employees: "20-50", revenue: "$1M-$5M" },
-  { name: "Velocity Partners", domain: "velocitypartners.com", industry: "Consulting", employees: "50-100", revenue: "$5M-$10M" },
+  { name: "Acme Corp", domain: "acme-demo.example", industry: "Technology", employees: "50-200", revenue: "$5M-$10M" },
+  { name: "Globex Corporation", domain: "globex-demo.example", industry: "Manufacturing", employees: "200-500", revenue: "$10M-$50M" },
+  { name: "Initech", domain: "initech-demo.example", industry: "Software", employees: "100-200", revenue: "$5M-$10M" },
+  { name: "Umbrella Corporation", domain: "umbrella-demo.example", industry: "Pharmaceuticals", employees: "500-1000", revenue: "$50M-$100M" },
+  { name: "Stark Industries", domain: "stark-demo.example", industry: "Technology", employees: "1000+", revenue: "$100M+" },
+  { name: "Wayne Enterprises", domain: "wayne-demo.example", industry: "Conglomerate", employees: "1000+", revenue: "$100M+" },
+  { name: "Dunder Mifflin", domain: "dundermifflin-demo.example", industry: "Paper Sales", employees: "20-50", revenue: "$1M-$5M" },
+  { name: "Wonka Industries", domain: "wonka-demo.example", industry: "Food & Beverage", employees: "100-500", revenue: "$10M-$50M" },
 ];
 
-const FIRST_NAMES = ["John", "Sarah", "Michael", "Emily", "David", "Jessica", "Robert", "Jennifer", "William", "Lisa", "James", "Mary", "Thomas", "Patricia", "Christopher", "Nancy", "Daniel", "Linda", "Matthew", "Elizabeth"];
-const LAST_NAMES = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin"];
+const FIRST_NAMES = ["Alex", "Jordan", "Taylor", "Morgan", "Casey", "Riley", "Avery", "Quinn", "Skyler", "Dakota", "Reese", "Cameron", "Parker", "Sage", "River", "Phoenix", "Rowan", "Blake", "Drew", "Finley"];
+const LAST_NAMES = ["Demo", "Test", "Sample", "Example", "Placeholder", "Fictional", "Simulated", "Virtual", "Imaginary", "Hypothetical", "Pretend", "Mockup", "Prototype", "Dummy", "Faux", "Pseudo", "Synthetic", "Artificial", "Fabricated", "Invented"];
 const TITLES = ["CEO", "CTO", "VP of Sales", "Head of Marketing", "Product Manager", "Engineering Manager", "Sales Director", "Marketing Director", "Operations Manager", "Business Development Manager"];
 
 const FUNNEL_STAGES = ["prospected", "engaged", "active", "waiting", "dormant", "closedWon", "closedLost"];
@@ -53,7 +53,7 @@ export async function generateDemoData(tenantId: string) {
       companyName: company.name,
       roleTitle: randomElement(TITLES),
       manuallyAddedNumber: `+1${Math.floor(Math.random() * 9000000000 + 1000000000)}`,
-      linkedinUrl: `https://linkedin.com/in/${firstName.toLowerCase()}-${lastName.toLowerCase()}`,
+      linkedinUrl: `https://demo-linkedin.example/profile/${firstName.toLowerCase()}-${lastName.toLowerCase()}-${nanoid(6)}`,
       tags: ["demo-data"],
     });
     
@@ -196,14 +196,26 @@ export async function clearDemoData(tenantId: string) {
   }
   
   // Delete demo threads (using tags JSON column - search for demo-data in array)
-  await database.execute(
-    sql`DELETE FROM threads WHERE tenantId = ${tenantId} AND JSON_CONTAINS(tags, '"demo-data"')`
-  );
+  if (demoThreads.length > 0) {
+    const threadIds = demoThreads.map((t: any) => t.id);
+    await database.delete(threads).where(
+      and(
+        eq(threads.tenantId, tenantId),
+        inArray(threads.id, threadIds)
+      )
+    );
+  }
   
   // Delete demo people (using source column)
-  await database.execute(
-    sql`DELETE FROM people WHERE tenantId = ${tenantId} AND source = 'demo'`
-  );
+  if (demoPeople.length > 0) {
+    const peopleIds = demoPeople.map((p: any) => p.id);
+    await database.delete(people).where(
+      and(
+        eq(people.tenantId, tenantId),
+        inArray(people.id, peopleIds)
+      )
+    );
+  }
   
   console.log("[Demo] Successfully cleared demo data");
   
