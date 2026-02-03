@@ -54,7 +54,7 @@ export async function generateDemoData(tenantId: string) {
       roleTitle: randomElement(TITLES),
       manuallyAddedNumber: `+1${Math.floor(Math.random() * 9000000000 + 1000000000)}`,
       linkedinUrl: `https://demo-linkedin.example/profile/${firstName.toLowerCase()}-${lastName.toLowerCase()}-${nanoid(6)}`,
-      tags: ["demo-data"],
+      tags: ["demo-data"]
     });
     
     people.push(person);
@@ -158,7 +158,8 @@ export async function clearDemoData(tenantId: string) {
   console.log("[Demo] Clearing demo data for tenant:", tenantId);
   
   // Get all demo-tagged items for counting before deletion
-  const demoPeople = await db.getPeopleBySource(tenantId, "demo");
+  const allPeople = await db.getPeopleByTenant(tenantId);
+  const demoPeople = allPeople.filter((p: any) => p.tags?.includes("demo-data"));
   const allThreads = await db.getThreadsByTenant(tenantId);
   const demoThreads = allThreads.filter((t: any) => t.tags?.includes("demo-data"));
   
