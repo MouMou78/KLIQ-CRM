@@ -999,3 +999,24 @@
 - [x] Add campaign analytics dashboard (stats endpoint)
 - [ ] Test email sending with configured SMTP accounts
 - [x] Add error handling for failed sends
+
+
+## New Features - Real-time Notifications & Campaign Scheduling
+
+### Real-time Notification Updates
+- [x] Implement polling mechanism for notification updates
+- [x] Update notification bell badge count automatically
+- [x] Refresh notification dropdown content without page reload
+- [x] Add visual indicator when new notifications arrive
+- [x] Optimize polling interval to balance freshness and performance (10 seconds)
+- [ ] Test real-time updates across multiple browser tabs
+
+### Campaign Scheduling System
+- [ ] Add scheduling UI to campaign creation/edit forms (backend ready)
+- [x] Implement timezone selection for scheduled campaigns
+- [x] Create backend scheduled job processor
+- [x] Add campaign status transitions (draft → scheduled → sending → sent)
+- [x] Display scheduled campaigns with countdown timers (backend endpoint ready)
+- [x] Allow users to reschedule or cancel scheduled campaigns
+- [ ] Test scheduling with different timezones
+- [x] Add validation to prevent scheduling in the past

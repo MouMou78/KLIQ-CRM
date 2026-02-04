@@ -9,15 +9,36 @@ import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDistanceToNow } from "date-fns";
+import { useEffect, useState } from "react";
 
 export function NotificationBell() {
-  const { data: notifications } = trpc.notifications.getUnread.useQuery();
+  const [previousCount, setPreviousCount] = useState(0);
+  const [showNewIndicator, setShowNewIndicator] = useState(false);
+  
+  // Enable real-time polling every 10 seconds
+  const { data: notifications } = trpc.notifications.getUnread.useQuery(undefined, {
+    refetchInterval: 10000, // Poll every 10 seconds
+    refetchIntervalInBackground: true, // Continue polling when tab is not focused
+  });
+  
   const utils = trpc.useUtils();
   const markAsReadMutation = trpc.notifications.markAsRead.useMutation({
     onSuccess: () => {
       utils.notifications.getUnread.invalidate();
     },
   });
+  
+  // Show visual indicator when new notifications arrive
+  useEffect(() => {
+    const currentCount = notifications?.length || 0;
+    if (currentCount > previousCount && previousCount > 0) {
+      setShowNewIndicator(true);
+      // Hide indicator after 3 seconds
+      const timer = setTimeout(() => setShowNewIndicator(false), 3000);
+      return () => clearTimeout(timer);
+    }
+    setPreviousCount(currentCount);
+  }, [notifications?.length, previousCount]);
 
   type Notification = {
     id: string;
@@ -37,7 +58,7 @@ export function NotificationBell() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
+          <Bell className={`h-5 w-5 ${showNewIndicator ? 'animate-pulse text-primary' : ''}`} />
           {unreadCount > 0 && (
             <Badge
               variant="destructive"
@@ -45,6 +66,9 @@ export function NotificationBell() {
             >
               {unreadCount > 9 ? "9+" : unreadCount}
             </Badge>
+          )}
+          {showNewIndicator && (
+            <span className="absolute top-0 right-0 h-2 w-2 bg-primary rounded-full animate-ping" />
           )}
         </Button>
       </DropdownMenuTrigger>

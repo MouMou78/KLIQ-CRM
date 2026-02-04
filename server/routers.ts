@@ -1953,6 +1953,68 @@ Generate a subject line and email body. Format your response as JSON with "subje
         const stats = await getCampaignStats(input.campaignId, ctx.user.tenantId);
         return stats;
       }),
+    
+    schedule: protectedProcedure
+      .input(z.object({
+        campaignId: z.string(),
+        scheduledAt: z.date(),
+        timezone: z.string().default("UTC"),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { scheduleCampaign } = await import("./campaign-scheduler");
+        const result = await scheduleCampaign(
+          input.campaignId,
+          ctx.user.tenantId,
+          input.scheduledAt,
+          input.timezone
+        );
+        return result;
+      }),
+    
+    cancelScheduled: protectedProcedure
+      .input(z.object({
+        campaignId: z.string(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { cancelScheduledCampaign } = await import("./campaign-scheduler");
+        const result = await cancelScheduledCampaign(input.campaignId, ctx.user.tenantId);
+        return result;
+      }),
+    
+    reschedule: protectedProcedure
+      .input(z.object({
+        campaignId: z.string(),
+        newScheduledAt: z.date(),
+        timezone: z.string().default("UTC"),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { rescheduleCampaign } = await import("./campaign-scheduler");
+        const result = await rescheduleCampaign(
+          input.campaignId,
+          ctx.user.tenantId,
+          input.newScheduledAt,
+          input.timezone
+        );
+        return result;
+      }),
+    
+    getScheduled: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { getScheduledCampaigns } = await import("./campaign-scheduler");
+        const campaigns = await getScheduledCampaigns(ctx.user.tenantId);
+        return campaigns;
+      }),
+    
+    processScheduled: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        // Admin-only endpoint to manually trigger scheduled campaign processing
+        if (ctx.user.role !== 'admin') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Admin access required' });
+        }
+        const { processScheduledCampaigns } = await import("./campaign-scheduler");
+        const result = await processScheduledCampaigns();
+        return result;
+      }),
   }),
 
   admin: router({
