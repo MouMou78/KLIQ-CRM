@@ -891,3 +891,27 @@
 - [ ] Display user activity logs (deferred)
 - [ ] Add invite new user functionality (deferred)
 - [x] Show authentication statistics
+
+
+## Accounts Page
+
+- [ ] Check if accounts/companies table exists in schema
+- [ ] Create accounts list page with search and filtering
+- [ ] Add create new account functionality
+- [ ] Create account detail page with company information
+- [ ] Add edit account functionality
+- [ ] Add delete account functionality
+- [ ] Link contacts to accounts
+- [ ] Add accounts navigation link below People
+- [ ] Display account contacts list on detail page
+
+
+## Accounts Page
+
+- [x] Check if accounts table exists in schema
+- [x] Create Accounts list page
+- [x] Add create account dialog
+- [x] Add backend CRUD procedures
+- [x] Add Accounts route to App.tsx
+- [ ] Add Accounts link to navigation (pending)
+- [ ] Test account creation and listing (pending)

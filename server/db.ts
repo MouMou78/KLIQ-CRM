@@ -436,6 +436,39 @@ export async function getAccountsByTenant(tenantId: string) {
   return database.select().from(accounts).where(eq(accounts.tenantId, tenantId));
 }
 
+export async function createAccount(data: {
+  tenantId: string;
+  name: string;
+  domain?: string;
+  industry?: string;
+  headquarters?: string;
+}) {
+  const database = await getDb();
+  if (!database) throw new Error("Database not available");
+  const id = nanoid();
+  await database.insert(accounts).values({ id, ...data });
+  const result = await database.select().from(accounts).where(eq(accounts.id, id)).limit(1);
+  return result[0]!;
+}
+
+export async function updateAccount(id: string, data: Partial<{
+  name: string;
+  domain: string;
+  industry: string;
+  headquarters: string;
+}>) {
+  const database = await getDb();
+  if (!database) throw new Error("Database not available");
+  await database.update(accounts).set(data).where(eq(accounts.id, id));
+  const result = await database.select().from(accounts).where(eq(accounts.id, id)).limit(1);
+  return result[0]!;
+}
+
+export async function deleteAccount(id: string) {
+  const database = await getDb();
+  if (!database) throw new Error("Database not available");
+  await database.delete(accounts).where(eq(accounts.id, id));
+}
 
 // ============ EMAIL SEQUENCES ============
 

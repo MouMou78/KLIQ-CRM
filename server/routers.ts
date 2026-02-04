@@ -1945,6 +1945,52 @@ Generate a subject line and email body. Format your response as JSON with "subje
         return { success: true };
       }),
   }),
+
+  accounts: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return db.getAccountsByTenant(ctx.user.tenantId);
+    }),
+
+    get: protectedProcedure
+      .input(z.object({ id: z.string() }))
+      .query(async ({ input }) => {
+        return db.getAccountById(input.id);
+      }),
+
+    create: protectedProcedure
+      .input(z.object({
+        name: z.string(),
+        domain: z.string().optional(),
+        industry: z.string().optional(),
+        headquarters: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return db.createAccount({
+          ...input,
+          tenantId: ctx.user.tenantId,
+        });
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        id: z.string(),
+        name: z.string().optional(),
+        domain: z.string().optional(),
+        industry: z.string().optional(),
+        headquarters: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        return db.updateAccount(id, data);
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.string() }))
+      .mutation(async ({ input }) => {
+        await db.deleteAccount(input.id);
+        return { success: true };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

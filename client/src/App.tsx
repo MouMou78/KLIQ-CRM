@@ -38,6 +38,7 @@ import ResetPassword from "./pages/ResetPassword";
 import EmailAccounts from "./pages/EmailAccounts";
 import Campaigns from "./pages/Campaigns";
 import UserManagement from "./pages/UserManagement";
+import Accounts from "./pages/Accounts";
 
 function Router() {
   return (
@@ -78,6 +79,12 @@ function Router() {
       <Route path="/people">
         <DashboardLayout>
           <People />
+        </DashboardLayout>
+      </Route>
+
+      <Route path="/accounts">
+        <DashboardLayout>
+          <Accounts />
         </DashboardLayout>
       </Route>
       
