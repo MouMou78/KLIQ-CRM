@@ -1,0 +1,15 @@
+{
+  "query": "CREATE TABLE `emailTemplates` (\n\t`id` varchar(36) NOT NULL,\n\t`tenantId` varchar(36) NOT NULL,\n\t`name` text NOT NULL,\n\t`description` text,\n\t`subject` text NOT NULL,\n\t`content` json NOT NULL,\n\t`variables` json DEFAULT ('[]'),\n\t`category` varchar(100),\n\t`isPublic` boolean NOT NULL DEFAULT false,\n\t`createdById` varchar(36) NOT NULL,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `emailTemplates_id` PRIMARY KEY(`id`)\n);\nCREATE INDEX `email_templates_tenant_idx` ON `emailTemplates` (`tenantId`);\nCREATE INDEX `email_templates_category_idx` ON `emailTemplates` (`category`);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2QkRhwd4AVTLhHG.a0950ca1ba2f --database TQEsx2HByTQrcAiUBn2kww --execute CREATE TABLE `emailTemplates` (\n\t`id` varchar(36) NOT NULL,\n\t`tenantId` varchar(36) NOT NULL,\n\t`name` text NOT NULL,\n\t`description` text,\n\t`subject` text NOT NULL,\n\t`content` json NOT NULL,\n\t`variables` json DEFAULT ('[]'),\n\t`category` varchar(100),\n\t`isPublic` boolean NOT NULL DEFAULT false,\n\t`createdById` varchar(36) NOT NULL,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `emailTemplates_id` PRIMARY KEY(`id`)\n);\nCREATE INDEX `email_templates_tenant_idx` ON `emailTemplates` (`tenantId`);\nCREATE INDEX `email_templates_category_idx` ON `emailTemplates` (`category`);",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 8 column 32 near \"'[]'),",
+    "\t`category` varchar(100),",
+    "\t`isPublic` boolean NOT NULL DEFAULT false,",
+    "\t`createdById` varchar(36) NOT NULL,",
+    "\t`createdAt` timestamp NOT NULL DEFAULT (now()),",
+    "\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,",
+    "\tCONSTRAINT `emailTemplates_id` PRIMARY KEY(`id`)",
+    ")\""
+  ]
+}

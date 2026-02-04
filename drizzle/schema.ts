@@ -699,3 +699,83 @@ export const tasks = mysqlTable("tasks", {
 
 export type Task = typeof tasks.$inferSelect;
 export type InsertTask = typeof tasks.$inferInsert;
+
+
+// Email Templates
+export const emailTemplates = mysqlTable("emailTemplates", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenantId", { length: 36 }).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  subject: text("subject").notNull(),
+  // Template content stored as JSON blocks
+  content: json("content").$type<Array<{
+    type: "text" | "image" | "button" | "divider" | "spacer";
+    content?: string;
+    styles?: Record<string, any>;
+    url?: string;
+    alt?: string;
+  }>>().notNull(),
+  variables: json("variables").$type<string[]>().default([]),
+  category: varchar("category", { length: 100 }),
+  isPublic: boolean("isPublic").default(false).notNull(),
+  createdById: varchar("createdById", { length: 36 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  tenantIdx: index("email_templates_tenant_idx").on(table.tenantId),
+  categoryIdx: index("email_templates_category_idx").on(table.category),
+}));
+
+export type EmailTemplate = typeof emailTemplates.$inferSelect;
+export type InsertEmailTemplate = typeof emailTemplates.$inferInsert;
+
+
+// Lead Scoring
+export const leadScores = mysqlTable("leadScores", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenantId", { length: 36 }).notNull(),
+  personId: varchar("personId", { length: 36 }).notNull(),
+  // Score components
+  engagementScore: int("engagementScore").default(0).notNull(),
+  demographicScore: int("demographicScore").default(0).notNull(),
+  behaviorScore: int("behaviorScore").default(0).notNull(),
+  totalScore: int("totalScore").default(0).notNull(),
+  // Score factors
+  emailOpens: int("emailOpens").default(0).notNull(),
+  emailClicks: int("emailClicks").default(0).notNull(),
+  emailReplies: int("emailReplies").default(0).notNull(),
+  websiteVisits: int("websiteVisits").default(0).notNull(),
+  formSubmissions: int("formSubmissions").default(0).notNull(),
+  // Metadata
+  lastActivityAt: timestamp("lastActivityAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  tenantIdx: index("lead_scores_tenant_idx").on(table.tenantId),
+  personIdx: index("lead_scores_person_idx").on(table.personId),
+  scoreIdx: index("lead_scores_total_idx").on(table.totalScore),
+}));
+
+export type LeadScore = typeof leadScores.$inferSelect;
+export type InsertLeadScore = typeof leadScores.$inferInsert;
+
+export const leadScoringRules = mysqlTable("leadScoringRules", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenantId", { length: 36 }).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  category: mysqlEnum("category", ["engagement", "demographic", "behavior"]).notNull(),
+  // Rule definition
+  eventType: varchar("eventType", { length: 100 }).notNull(), // email_open, email_click, etc.
+  points: int("points").notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  tenantIdx: index("lead_scoring_rules_tenant_idx").on(table.tenantId),
+  categoryIdx: index("lead_scoring_rules_category_idx").on(table.category),
+}));
+
+export type LeadScoringRule = typeof leadScoringRules.$inferSelect;
+export type InsertLeadScoringRule = typeof leadScoringRules.$inferInsert;

@@ -2152,6 +2152,237 @@ Generate a subject line and email body. Format your response as JSON with "subje
       }),
   }),
   
+  forecasting: router({
+    generate: protectedProcedure
+      .input(z.object({
+        timeframe: z.enum(["month", "quarter", "year"]).optional(),
+      }))
+      .query(async ({ input, ctx }) => {
+        const { generateForecast } = await import("./forecasting");
+        return generateForecast(ctx.user.tenantId, input.timeframe);
+      }),
+    
+    scenarios: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { generateScenarios } = await import("./forecasting");
+        return generateScenarios(ctx.user.tenantId);
+      }),
+    
+    trend: protectedProcedure
+      .input(z.object({
+        months: z.number().optional(),
+      }))
+      .query(async ({ input, ctx }) => {
+        const { getForecastTrend } = await import("./forecasting");
+        return getForecastTrend(ctx.user.tenantId, input.months);
+      }),
+  }),
+  
+  leadScoring: router({
+    getTopLeads: protectedProcedure
+      .input(z.object({ limit: z.number().optional() }))
+      .query(async ({ input, ctx }) => {
+        const { getTopLeads } = await import("./db-lead-scoring");
+        return getTopLeads(ctx.user.tenantId, input.limit);
+      }),
+    
+    getScoreForPerson: protectedProcedure
+      .input(z.object({ personId: z.string() }))
+      .query(async ({ input, ctx }) => {
+        const { getLeadScoreForPerson } = await import("./db-lead-scoring");
+        return getLeadScoreForPerson(ctx.user.tenantId, input.personId);
+      }),
+    
+    calculateScore: protectedProcedure
+      .input(z.object({
+        personId: z.string(),
+        accountId: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const db = await import("./db");
+        const { scoreContact } = await import("./lead-scoring");
+        const { saveLeadScore } = await import("./db-lead-scoring");
+        
+        // Get person and account data
+        const person = await db.getPersonById(input.personId);
+        if (!person) throw new Error("Person not found");
+        
+        let account = null;
+        if (input.accountId) {
+          account = await db.getAccountById(input.accountId);
+        }
+        
+        // Get recent events (moments)
+        const moments = await db.getMomentsByTenant(ctx.user.tenantId);
+        const events = moments.map((m: any) => ({
+          type: m.type,
+          timestamp: new Date(m.timestamp),
+        }));
+        
+        // Calculate scores
+        const scores = await scoreContact(person, account, events);
+        
+        // Save to database
+        await saveLeadScore({
+          tenantId: ctx.user.tenantId,
+          personId: input.personId,
+          fitScore: scores.fitScore,
+          intentScore: scores.intentScore,
+          combinedScore: scores.combinedScore,
+        });
+        
+        return scores;
+      }),
+    
+    getRules: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { getScoringRules } = await import("./db-lead-scoring");
+        return getScoringRules(ctx.user.tenantId);
+      }),
+    
+    createRule: protectedProcedure
+      .input(z.object({
+        name: z.string(),
+        description: z.string().optional(),
+        category: z.enum(["engagement", "demographic", "behavior"]),
+        eventType: z.string(),
+        points: z.number(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { upsertScoringRule } = await import("./db-lead-scoring");
+        const ruleId = await upsertScoringRule({
+          tenantId: ctx.user.tenantId,
+          ...input,
+        });
+        return { ruleId };
+      }),
+    
+    updateRule: protectedProcedure
+      .input(z.object({
+        id: z.string(),
+        name: z.string().optional(),
+        description: z.string().optional(),
+        points: z.number().optional(),
+        isActive: z.boolean().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { upsertScoringRule } = await import("./db-lead-scoring");
+        await upsertScoringRule({
+          id: input.id,
+          tenantId: ctx.user.tenantId,
+          name: input.name || "",
+          category: "engagement", // Required but not changing
+          eventType: "", // Required but not changing
+          points: input.points || 0,
+          isActive: input.isActive,
+        });
+        return { success: true };
+      }),
+    
+    deleteRule: protectedProcedure
+      .input(z.object({ id: z.string() }))
+      .mutation(async ({ input }) => {
+        const { deleteScoringRule } = await import("./db-lead-scoring");
+        await deleteScoringRule(input.id);
+        return { success: true };
+      }),
+  }),
+  
+  emailTemplates: router({
+    list: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { getTemplatesByTenant } = await import("./db-templates");
+        return getTemplatesByTenant(ctx.user.tenantId);
+      }),
+    
+    get: protectedProcedure
+      .input(z.object({ id: z.string() }))
+      .query(async ({ input }) => {
+        const { getTemplateById } = await import("./db-templates");
+        return getTemplateById(input.id);
+      }),
+    
+    create: protectedProcedure
+      .input(z.object({
+        name: z.string(),
+        description: z.string().optional(),
+        subject: z.string(),
+        content: z.array(z.object({
+          type: z.enum(["text", "image", "button", "divider", "spacer"]),
+          content: z.string().optional(),
+          styles: z.record(z.string(), z.any()).optional(),
+          url: z.string().optional(),
+          alt: z.string().optional(),
+        })),
+        variables: z.array(z.string()).optional(),
+        category: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { createTemplate } = await import("./db-templates");
+        const templateId = await createTemplate({
+          tenantId: ctx.user.tenantId,
+          createdById: ctx.user.id,
+          ...input,
+        });
+        return { templateId };
+      }),
+    
+    update: protectedProcedure
+      .input(z.object({
+        id: z.string(),
+        name: z.string().optional(),
+        description: z.string().optional(),
+        subject: z.string().optional(),
+        content: z.array(z.object({
+          type: z.enum(["text", "image", "button", "divider", "spacer"]),
+          content: z.string().optional(),
+          styles: z.record(z.string(), z.any()).optional(),
+          url: z.string().optional(),
+          alt: z.string().optional(),
+        })).optional(),
+        variables: z.array(z.string()).optional(),
+        category: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { updateTemplate } = await import("./db-templates");
+        const { id, ...data } = input;
+        await updateTemplate(id, data);
+        return { success: true };
+      }),
+    
+    delete: protectedProcedure
+      .input(z.object({ id: z.string() }))
+      .mutation(async ({ input }) => {
+        const { deleteTemplate } = await import("./db-templates");
+        await deleteTemplate(input.id);
+        return { success: true };
+      }),
+    
+    duplicate: protectedProcedure
+      .input(z.object({ id: z.string() }))
+      .mutation(async ({ input, ctx }) => {
+        const { duplicateTemplate } = await import("./db-templates");
+        const newId = await duplicateTemplate(input.id, ctx.user.tenantId, ctx.user.id);
+        return { templateId: newId };
+      }),
+    
+    render: protectedProcedure
+      .input(z.object({
+        id: z.string(),
+        variables: z.record(z.string(), z.string()),
+      }))
+      .query(async ({ input }) => {
+        const { getTemplateById, renderTemplate } = await import("./db-templates");
+        const template = await getTemplateById(input.id);
+        if (!template) throw new Error("Template not found");
+        const variables: Record<string, string> = {};
+        Object.entries(input.variables).forEach(([key, value]) => {
+          variables[key] = String(value);
+        });
+        return renderTemplate(template, variables);
+      }),
+  }),
+  
   tasks: router({
     list: protectedProcedure
       .query(async ({ ctx }) => {

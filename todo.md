@@ -1084,3 +1084,36 @@
 - [ ] Implement due date reminders
 - [ ] Create task assignment notifications
 - [ ] Test task workflows and notifications
+
+
+## New Features - Template Builder, Lead Scoring & Forecasting
+
+### Email Template Builder
+- [x] Design template schema with blocks and variables
+- [x] Create drag-and-drop template editor UI (simplified block-based editor)
+- [x] Implement template block library (text, image, button, divider)
+- [x] Add variable insertion for personalization
+- [x] Create template preview functionality
+- [x] Build template save and management system
+- [x] Add template sharing and duplication
+- [ ] Test template rendering in emails
+
+### Lead Scoring System
+- [x] Design lead scoring schema and rules
+- [x] Implement engagement scoring (opens, clicks, replies)
+- [x] Add demographic scoring factors
+- [x] Create behavior tracking integration
+- [x] Build scoring rule management (backend endpoints)
+- [x] Add automatic score updates
+- [ ] Create lead score visualization UI
+- [ ] Test scoring accuracy and updates
+
+### Sales Forecasting
+- [x] Design forecasting data model
+- [x] Calculate pipeline-based revenue projections
+- [x] Implement historical close rate analysis
+- [x] Add seasonal trend detection
+- [x] Create confidence interval calculations
+- [ ] Build forecasting dashboard UI
+- [x] Add scenario planning features (backend endpoints)
+- [ ] Test forecast accuracy with historical data

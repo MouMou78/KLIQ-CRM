@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS emailTemplates (\n  id varchar(36) PRIMARY KEY,\n  tenantId varchar(36) NOT NULL,\n  name text NOT NULL,\n  description text,\n  subject text NOT NULL,\n  content json NOT NULL,\n  variables json,\n  category varchar(100),\n  isPublic tinyint(1) NOT NULL DEFAULT 0,\n  createdById varchar(36) NOT NULL,\n  createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2QkRhwd4AVTLhHG.a0950ca1ba2f --database TQEsx2HByTQrcAiUBn2kww --execute CREATE TABLE IF NOT EXISTS emailTemplates (\n  id varchar(36) PRIMARY KEY,\n  tenantId varchar(36) NOT NULL,\n  name text NOT NULL,\n  description text,\n  subject text NOT NULL,\n  content json NOT NULL,\n  variables json,\n  category varchar(100),\n  isPublic tinyint(1) NOT NULL DEFAULT 0,\n  createdById varchar(36) NOT NULL,\n  createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 215
+}
