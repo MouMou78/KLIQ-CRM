@@ -1208,3 +1208,24 @@
 - [ ] Add bulk operation backend endpoints
 - [ ] Show selection count and clear selection button
 - [ ] Test bulk operations with multiple contacts
+
+## New Features - Contact Role Filtering & Editing
+
+### Contact Filtering by Role
+- [x] Add role filter dropdown to Account Detail page
+- [x] Implement filter logic to show only selected roles
+- [x] Add "All Roles" option to clear filter
+- [x] Persist filter selection in component state
+
+### Inline Role Editing
+- [x] Make role badges clickable for editing
+- [x] Add role selection dropdown on badge click
+- [x] Update backend endpoint to change contact role
+- [x] Implement optimistic UI update for role changes
+- [x] Show success/error feedback after role update
+
+### Last Contact Date Display
+- [x] Calculate last contact date from activity summaries
+- [x] Display relative time (e.g., "3 days ago") below contact name
+- [x] Handle cases with no contact history
+- [x] Format dates consistently across the app

@@ -1,22 +1,55 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { RoleBadge, type BuyingRole } from "@/components/RoleBadge";
+import { type BuyingRole } from "@/components/RoleBadge";
+import { EditableRoleBadge } from "@/components/EditableRoleBadge";
 import { trpc } from "@/lib/trpc";
-import { Building2, Globe, MapPin, Users, ArrowLeft, Mail, Phone, Briefcase, CheckSquare, Square } from "lucide-react";
+import { Building2, Globe, MapPin, Users, ArrowLeft, Mail, Phone, Briefcase, CheckSquare, Square, Filter } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useState } from "react";
 import { Link, useParams } from "wouter";
+
+// Helper function to format relative time
+function formatRelativeTime(date: Date | null): string {
+  if (!date) return "Never contacted";
+  
+  const now = new Date();
+  const diffMs = now.getTime() - new Date(date).getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  
+  if (diffMinutes < 60) return "Just now";
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+  if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo ago`;
+  return `${Math.floor(diffDays / 365)}y ago`;
+}
 
 export default function AccountDetailPage() {
   const params = useParams<{ id: string }>();
   const accountId = params.id!;
   const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
+  const [roleFilter, setRoleFilter] = useState<string>("all");
 
   const { data: account, isLoading } = trpc.accounts.get.useQuery({ id: accountId });
   const { data: contacts } = trpc.people.list.useQuery();
 
-  // Filter contacts by accountId
-  const linkedContacts = contacts?.filter((c: any) => c.accountId === accountId) || [];
+  // Filter contacts by accountId and role
+  let linkedContacts = contacts?.filter((c: any) => c.accountId === accountId) || [];
+  
+  // Apply role filter
+  if (roleFilter !== "all") {
+    linkedContacts = linkedContacts.filter((c: any) => c.buyingRole === roleFilter);
+  }
   
   // Get activity summaries for all contacts
   const contactIds = linkedContacts.map((c: any) => c.id);
@@ -150,10 +183,26 @@ export default function AccountDetailPage() {
           {/* Linked Contacts */}
           <Card className="p-6">
                <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Contacts ({linkedContacts.length})
-              </h2>
+              <div className="flex items-center gap-4">
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Contacts ({linkedContacts.length})
+                </h2>
+                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <Filter className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Filter by role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Roles</SelectItem>
+                    <SelectItem value="Decision Maker">Decision Maker</SelectItem>
+                    <SelectItem value="Champion">Champion</SelectItem>
+                    <SelectItem value="Influencer">Influencer</SelectItem>
+                    <SelectItem value="User">User</SelectItem>
+                    <SelectItem value="Blocker">Blocker</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               {linkedContacts.length > 0 && (
                 <div className="flex items-center gap-2">
                   {showBulkActions && (
@@ -210,7 +259,7 @@ export default function AccountDetailPage() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="font-medium">{contact.name}</p>
-                            <RoleBadge role={contact.buyingRole as BuyingRole} />
+                            <EditableRoleBadge personId={contact.id} role={contact.buyingRole as BuyingRole} />
                             {activitySummaries[contact.id] && activitySummaries[contact.id].totalActivities > 0 && (
                               <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
                                 {activitySummaries[contact.id].emailCount > 0 && `📧 ${activitySummaries[contact.id].emailCount}`}
@@ -221,6 +270,11 @@ export default function AccountDetailPage() {
                           </div>
                           {contact.title && (
                             <p className="text-sm text-muted-foreground">{contact.title}</p>
+                          )}
+                          {activitySummaries[contact.id]?.lastActivityDate && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Last contacted {formatRelativeTime(activitySummaries[contact.id].lastActivityDate)}
+                            </p>
                           )}
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">

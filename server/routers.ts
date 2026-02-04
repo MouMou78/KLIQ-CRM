@@ -273,6 +273,23 @@ export const appRouter = router({
         return Object.fromEntries(summaries);
       }),
     
+    updateRole: protectedProcedure
+      .input(z.object({ 
+        personId: z.string(),
+        buyingRole: z.enum(["Decision Maker", "Champion", "Influencer", "User", "Blocker"]).nullable()
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const person = await db.getPersonById(input.personId);
+        if (!person || person.tenantId !== ctx.user.tenantId) {
+          throw new TRPCError({ code: "NOT_FOUND" });
+        }
+        
+        const { updatePersonRole } = await import('./db-people-update');
+        await updatePersonRole(input.personId, input.buyingRole);
+        
+        return { success: true };
+      }),
+    
     get: protectedProcedure
       .input(z.object({ id: z.string() }))
       .query(async ({ input, ctx }) => {
