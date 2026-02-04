@@ -221,7 +221,7 @@ function DashboardLayoutContent({
               
               {/* Amplemarket Submenu */}
               <SidebarMenuItem>
-                <details className="group/amplemarket" open>
+                <details className="group/amplemarket">
                   <summary className="flex items-center gap-2 h-10 px-2 rounded-md hover:bg-accent transition-colors cursor-pointer list-none">
                     <Building2 className="h-4 w-4" />
                     <span className="flex-1 font-normal">Amplemarket</span>
@@ -249,7 +249,7 @@ function DashboardLayoutContent({
 
               {/* Settings Submenu */}
               <SidebarMenuItem>
-                <details className="group/settings" open>
+                <details className="group/settings">
                   <summary className="flex items-center gap-2 h-10 px-2 rounded-md hover:bg-accent transition-colors cursor-pointer list-none">
                     <Settings className="h-4 w-4" />
                     <span className="flex-1 font-normal">Settings</span>

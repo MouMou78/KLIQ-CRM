@@ -48,18 +48,6 @@ export const accounts = mysqlTable("accounts", {
   linkedinUrl: varchar("linkedinUrl", { length: 500 }),
   enrichmentSource: text("enrichmentSource"),
   enrichmentSnapshot: json("enrichmentSnapshot").$type<Record<string, any>>(),
-  
-  // Lead Scoring Fields
-  fitScore: int("fitScore").default(0),
-  intentScore: int("intentScore").default(0),
-  combinedScore: int("combinedScore").default(0),
-  fitTier: mysqlEnum("fitTier", ["A", "B", "C"]),
-  intentTier: mysqlEnum("intentTier", ["Hot", "Warm", "Cold"]),
-  scoreReasons: json("scoreReasons").$type<string[]>().default([]),
-  lifecycleStage: mysqlEnum("lifecycleStage", ["Lead", "MQL", "SQL", "Opportunity", "ClosedWon", "ClosedLost"]).default("Lead"),
-  lifecycleStageEnteredAt: timestamp("lifecycleStageEnteredAt"),
-  ownerUserId: varchar("ownerUserId", { length: 36 }),
-  
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({
@@ -115,19 +103,6 @@ export const people = mysqlTable("people", {
   lastStageExecutedAt: timestamp("lastStageExecutedAt"),
   notes: text("notes"),
   tags: json("tags").$type<string[]>().default([]),
-  
-  // Lead Scoring Fields
-  fitScore: int("fitScore").default(0),
-  intentScore: int("intentScore").default(0),
-  combinedScore: int("combinedScore").default(0),
-  fitTier: mysqlEnum("fitTier", ["A", "B", "C"]),
-  intentTier: mysqlEnum("intentTier", ["Hot", "Warm", "Cold"]),
-  scoreReasons: json("scoreReasons").$type<string[]>().default([]),
-  lifecycleStage: mysqlEnum("lifecycleStage", ["Lead", "MQL", "SQL", "Opportunity", "ClosedWon", "ClosedLost"]).default("Lead"),
-  lifecycleStageEnteredAt: timestamp("lifecycleStageEnteredAt"),
-  seniority: mysqlEnum("seniority", ["C-Level", "VP", "Director", "Manager", "IC", "Other"]),
-  department: varchar("department", { length: 100 }),
-  region: varchar("region", { length: 100 }),
   enrichmentSource: text("enrichmentSource"),
   enrichmentSnapshot: json("enrichmentSnapshot").$type<Record<string, any>>(),
   enrichmentLastSyncedAt: timestamp("enrichmentLastSyncedAt"),

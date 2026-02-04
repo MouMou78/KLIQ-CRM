@@ -499,3 +499,9 @@
 - [ ] Show score breakdown on contact detail page
 - [ ] Add score-based filtering and sorting
 - [ ] Test scoring with various scenarios
+
+
+## Urgent Fixes
+- [x] Make Settings and Amplemarket submenus collapsed by default
+- [x] Fix database query error with new scoring fields
+- [x] Test all pages load correctly
