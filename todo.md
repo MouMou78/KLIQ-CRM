@@ -915,3 +915,27 @@
 - [x] Add Accounts route to App.tsx
 - [ ] Add Accounts link to navigation (pending)
 - [ ] Test account creation and listing (pending)
+
+
+## Accounts System Completion
+
+### Navigation
+- [x] Add "Accounts" link to sidebar below People
+- [ ] Test navigation to Accounts page
+
+### Account Detail Page
+- [x] Create AccountDetail page component
+- [x] Add route for /accounts/:id
+- [x] Display company information (name, domain, industry, headquarters, etc.)
+- [x] Show list of linked contacts
+- [ ] Add activity timeline for account (deferred)
+- [ ] Link from Accounts list page (pending)
+
+### Smart Account Linking
+- [x] Add accountId field to person create/edit forms
+- [x] Add account search/select dropdown in person forms
+- [x] Implement auto-population: when company name matches existing account, auto-link and populate fields
+- [ ] Update bulk import to detect company names and auto-link to accounts (pending)
+- [ ] Create new accounts automatically during import if company doesn't exist (pending)
+- [ ] Populate person fields from linked account (domain, industry, etc.) (pending)
+- [ ] Test auto-linking with sample data (pending)

@@ -12,9 +12,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { Plus } from "lucide-react";
-import { useState } from "react";
+import { Plus, Building2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function AddPersonDialog() {
   const [open, setOpen] = useState(false);
@@ -25,7 +26,25 @@ export function AddPersonDialog() {
     title: "",
     linkedinUrl: "",
     notes: "",
+    accountId: "",
   });
+  const [selectedAccount, setSelectedAccount] = useState<any>(null);
+
+  const { data: accounts } = trpc.accounts.list.useQuery();
+
+  // Auto-link account when company name matches
+  useEffect(() => {
+    if (formData.companyName && accounts) {
+      const matchingAccount = accounts.find(
+        (acc: any) => acc.name.toLowerCase() === formData.companyName.toLowerCase()
+      );
+      if (matchingAccount) {
+        setSelectedAccount(matchingAccount);
+        setFormData(prev => ({ ...prev, accountId: matchingAccount.id }));
+        toast.info(`Auto-linked to account: ${matchingAccount.name}`);
+      }
+    }
+  }, [formData.companyName, accounts]);
 
   const utils = trpc.useUtils();
   const createPerson = trpc.people.create.useMutation({
@@ -40,7 +59,9 @@ export function AddPersonDialog() {
         title: "",
         linkedinUrl: "",
         notes: "",
+        accountId: "",
       });
+      setSelectedAccount(null);
     },
     onError: (error) => {
       toast.error(error.message || "Failed to add contact");
@@ -112,6 +133,38 @@ export function AddPersonDialog() {
                 }
                 placeholder="Acme Corp"
               />
+              {selectedAccount && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Building2 className="h-3 w-3" />
+                  Linked to account: {selectedAccount.name}
+                </p>
+              )}
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="accountId">Link to Account (Optional)</Label>
+              <Select
+                value={formData.accountId}
+                onValueChange={(value) => {
+                  setFormData({ ...formData, accountId: value });
+                  const account = accounts?.find((a: any) => a.id === value);
+                  setSelectedAccount(account || null);
+                  if (account && !formData.companyName) {
+                    setFormData(prev => ({ ...prev, companyName: account.name }));
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an account" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No account</SelectItem>
+                  {accounts?.map((account: any) => (
+                    <SelectItem key={account.id} value={account.id}>
+                      {account.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="title">Title</Label>

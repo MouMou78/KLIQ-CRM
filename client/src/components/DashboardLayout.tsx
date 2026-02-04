@@ -33,6 +33,7 @@ import { Button } from "./ui/button";
 const menuItems = [
   { icon: Home, label: "Home", path: "/" },
   { icon: Users, label: "People", path: "/people" },
+  { icon: Building2, label: "Accounts", path: "/accounts" },
   { icon: MessageSquare, label: "Team Chat", path: "/chat" },
   { icon: Calendar, label: "Events", path: "/events" },
   { icon: Sparkles, label: "AI Assistant", path: "/ai-assistant" },

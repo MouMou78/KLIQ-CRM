@@ -19,6 +19,7 @@ import AIAssistant from "./pages/AIAssistant";
 import AmplemarketAccounts from "./pages/AmplemarketAccounts";
 import AmplemarketPeople from "./pages/AmplemarketPeople";
 import AccountDetail from "./pages/AccountDetail";
+import AccountDetailPage from "./pages/AccountDetailPage";
 
 import BulkImport from "./pages/BulkImport";
 import Automation from "./pages/Automation";
@@ -151,7 +152,7 @@ function Router() {
       <Route path="/accounts/:id">
         {(params) => (
           <DashboardLayout>
-            <AccountDetail />
+            <AccountDetailPage />
           </DashboardLayout>
         )}
       </Route>
