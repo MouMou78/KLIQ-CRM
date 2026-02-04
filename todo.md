@@ -741,3 +741,29 @@
 - [x] Connect chat to AI backend
 - [x] Style chat messages with proper formatting
 - [x] Add loading states for AI responses
+
+
+## AI Assistant Enhancements - Phase 2
+
+### Conversation History
+- [x] Create conversations table in database
+- [x] Add sidebar to display conversation history
+- [x] Implement save conversation functionality
+- [x] Add ability to resume previous conversations
+- [x] Add new conversation button
+- [x] Add delete conversation option
+- [x] Auto-save conversations as user chats
+
+### Voice Input
+- [x] Add microphone button to input area
+- [x] Integrate speech-to-text functionality
+- [x] Show recording indicator when active
+- [x] Handle voice input errors gracefully
+- [x] Add permission request for microphone access
+
+### Chat Export
+- [x] Add export button to chat interface
+- [x] Implement export to text format
+- [x] Implement export to PDF format
+- [x] Include timestamps in exports
+- [x] Add conversation title to exports

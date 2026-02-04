@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `aiConversations` (\n\t`id` varchar(36) NOT NULL,\n\t`tenantId` varchar(36) NOT NULL,\n\t`userId` varchar(36) NOT NULL,\n\t`title` varchar(255) NOT NULL,\n\t`messages` json NOT NULL,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `aiConversations_id` PRIMARY KEY(`id`)\n);\nCREATE INDEX `user_conversations_idx` ON `aiConversations` (`userId`);\nCREATE INDEX `tenant_conversations_idx` ON `aiConversations` (`tenantId`);\nCREATE INDEX `updated_conversations_idx` ON `aiConversations` (`updatedAt`);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2QkRhwd4AVTLhHG.a0950ca1ba2f --database TQEsx2HByTQrcAiUBn2kww --execute CREATE TABLE `aiConversations` (\n\t`id` varchar(36) NOT NULL,\n\t`tenantId` varchar(36) NOT NULL,\n\t`userId` varchar(36) NOT NULL,\n\t`title` varchar(255) NOT NULL,\n\t`messages` json NOT NULL,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `aiConversations_id` PRIMARY KEY(`id`)\n);\nCREATE INDEX `user_conversations_idx` ON `aiConversations` (`userId`);\nCREATE INDEX `tenant_conversations_idx` ON `aiConversations` (`tenantId`);\nCREATE INDEX `updated_conversations_idx` ON `aiConversations` (`updatedAt`);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 3185
+}

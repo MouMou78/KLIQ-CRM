@@ -707,6 +707,7 @@ export const appRouter = router({
           role: z.enum(["system", "user", "assistant"]),
           content: z.string(),
         })),
+        conversationId: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         const { queryAIAssistant } = await import("./aiAssistant");
@@ -715,7 +716,70 @@ export const appRouter = router({
           userId: parseInt(ctx.user.id),
           messages: input.messages,
         });
+        
+        // Auto-save conversation if conversationId provided
+        if (input.conversationId) {
+          const updatedMessages = [...input.messages, { role: "assistant" as const, content: response }];
+          await db.updateAIConversation({
+            id: input.conversationId,
+            messages: updatedMessages,
+          });
+        }
+        
         return { response };
+      }),
+    
+    getConversations: protectedProcedure
+      .query(async ({ ctx }) => {
+        return db.getAIConversations({
+          tenantId: ctx.user.tenantId,
+          userId: ctx.user.id,
+        });
+      }),
+    
+    getConversation: protectedProcedure
+      .input(z.object({ id: z.string() }))
+      .query(async ({ input }) => {
+        return db.getAIConversation(input.id);
+      }),
+    
+    createConversation: protectedProcedure
+      .input(z.object({
+        title: z.string(),
+        messages: z.array(z.object({
+          role: z.string(),
+          content: z.string(),
+        })),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const id = await db.createAIConversation({
+          tenantId: ctx.user.tenantId,
+          userId: ctx.user.id,
+          title: input.title,
+          messages: input.messages,
+        });
+        return { id };
+      }),
+    
+    updateConversation: protectedProcedure
+      .input(z.object({
+        id: z.string(),
+        title: z.string().optional(),
+        messages: z.array(z.object({
+          role: z.string(),
+          content: z.string(),
+        })).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        await db.updateAIConversation(input);
+        return { success: true };
+      }),
+    
+    deleteConversation: protectedProcedure
+      .input(z.object({ id: z.string() }))
+      .mutation(async ({ input }) => {
+        await db.deleteAIConversation(input.id);
+        return { success: true };
       }),
   }),
   

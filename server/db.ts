@@ -9,7 +9,8 @@ import {
   moments, Moment, InsertMoment,
   nextActions, NextAction, InsertNextAction,
   events, Event, InsertEvent,
-  integrations, Integration, InsertIntegration
+  integrations, Integration, InsertIntegration,
+  aiConversations
 } from "../drizzle/schema";
 import { nanoid } from "nanoid";
 
@@ -1279,4 +1280,72 @@ export async function searchMessages(params: {
     .where(and(...conditions))
     .orderBy(desc(messages.createdAt))
     .limit(params.limit || 50);
+}
+
+// AI Conversations
+export async function createAIConversation(params: {
+  tenantId: string;
+  userId: string;
+  title: string;
+  messages: Array<{ role: string; content: string }>;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not initialized");
+  const id = crypto.randomUUID();
+  await db.insert(aiConversations).values({
+    id,
+    ...params,
+  });
+  return id;
+}
+
+export async function getAIConversations(params: {
+  tenantId: string;
+  userId: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not initialized");
+  return db
+    .select()
+    .from(aiConversations)
+    .where(
+      and(
+        eq(aiConversations.tenantId, params.tenantId),
+        eq(aiConversations.userId, params.userId)
+      )
+    )
+    .orderBy(desc(aiConversations.updatedAt));
+}
+
+export async function getAIConversation(id: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not initialized");
+  const results = await db
+    .select()
+    .from(aiConversations)
+    .where(eq(aiConversations.id, id))
+    .limit(1);
+  return results[0];
+}
+
+export async function updateAIConversation(params: {
+  id: string;
+  title?: string;
+  messages?: Array<{ role: string; content: string }>;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not initialized");
+  const { id, ...updates } = params;
+  await db
+    .update(aiConversations)
+    .set(updates)
+    .where(eq(aiConversations.id, id));
+}
+
+export async function deleteAIConversation(id: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not initialized");
+  await db
+    .delete(aiConversations)
+    .where(eq(aiConversations.id, id));
 }

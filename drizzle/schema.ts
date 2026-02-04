@@ -533,3 +533,20 @@ export const notifications = mysqlTable("notifications", {
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = typeof notifications.$inferInsert;
+
+export const aiConversations = mysqlTable("aiConversations", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenantId", { length: 36 }).notNull(),
+  userId: varchar("userId", { length: 36 }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  messages: json("messages").notNull(), // Array of {role, content}
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  userIdx: index("user_conversations_idx").on(table.userId),
+  tenantIdx: index("tenant_conversations_idx").on(table.tenantId),
+  updatedIdx: index("updated_conversations_idx").on(table.updatedAt),
+}));
+
+export type AIConversation = typeof aiConversations.$inferSelect;
+export type InsertAIConversation = typeof aiConversations.$inferInsert;
