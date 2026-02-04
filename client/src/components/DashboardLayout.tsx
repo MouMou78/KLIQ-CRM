@@ -41,14 +41,17 @@ const menuItems = [
   { icon: Wand2, label: "Email Generator", path: "/email-generator" },
   { icon: Sparkles, label: "AI Assistant", path: "/ai-assistant" },
   { icon: Calendar, label: "Events", path: "/events" },
-  { icon: Building2, label: "Amplemarket Accounts", path: "/amplemarket/accounts" },
-  { icon: UserCircle, label: "Amplemarket People", path: "/amplemarket/people" },
   { icon: Database, label: "Demo Environment", path: "/demo" },
 ];
 
 const settingsItems = [
   { icon: Settings, label: "Integrations", path: "/integrations" },
   { icon: Sliders, label: "Custom Fields", path: "/custom-fields" },
+];
+
+const amplemarketItems = [
+  { icon: Building2, label: "Accounts", path: "/amplemarket/accounts" },
+  { icon: UserCircle, label: "People", path: "/amplemarket/people" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -217,6 +220,34 @@ function DashboardLayoutContent({
                 );
               })}
               
+              {/* Amplemarket Submenu */}
+              <SidebarMenuItem>
+                <details className="group/amplemarket" open>
+                  <summary className="flex items-center gap-2 h-10 px-2 rounded-md hover:bg-accent transition-colors cursor-pointer list-none">
+                    <Building2 className="h-4 w-4" />
+                    <span className="flex-1 font-normal">Amplemarket</span>
+                    <ChevronDown className="h-4 w-4 transition-transform group-open/amplemarket:rotate-180" />
+                  </summary>
+                  <SidebarMenuSub className="ml-4 mt-1">
+                    {amplemarketItems.map(item => {
+                      const isActive = location === item.path;
+                      return (
+                        <SidebarMenuSubItem key={item.path}>
+                          <SidebarMenuSubButton
+                            isActive={isActive}
+                            onClick={() => setLocation(item.path)}
+                            className="h-9"
+                          >
+                            <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
+                            <span>{item.label}</span>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      );
+                    })}
+                  </SidebarMenuSub>
+                </details>
+              </SidebarMenuItem>
+
               {/* Settings Submenu */}
               <SidebarMenuItem>
                 <details className="group/settings" open>
