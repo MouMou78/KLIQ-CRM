@@ -1145,3 +1145,35 @@
 - [x] Add assignment notifications system (uses existing notifications)
 - [ ] Create team member presence indicators
 - [ ] Test collaboration features with multiple users
+
+
+## New Features - Calendar, Documents & Reporting
+
+### Calendar Integration
+- [x] Design calendar events schema
+- [x] Implement Google Calendar OAuth integration (backend ready, OAuth setup required)
+- [x] Implement Outlook Calendar OAuth integration (backend ready, OAuth setup required)
+- [x] Sync meetings from external calendars to CRM
+- [x] Create CRM activities from calendar events
+- [ ] Show availability in meeting scheduler
+- [x] Add two-way sync for event updates (infrastructure ready)
+- [ ] Test calendar sync with real accounts (requires OAuth credentials)
+
+### Document Management
+- [x] Design documents schema with version control
+- [x] Implement file upload to S3
+- [x] Create document attachment system for entities
+- [ ] Add file preview functionality (backend ready)
+- [x] Implement version history tracking
+- [x] Create folder structure for organization
+- [ ] Add document search and filtering (backend ready)
+- [ ] Test file uploads and version control
+
+### Reporting Exports
+- [x] Design report templates (pipeline, campaigns, activities)
+- [x] Implement PDF report generation
+- [x] Implement Excel export functionality
+- [x] Add report scheduling system (backend infrastructure ready)
+- [x] Create email delivery for scheduled reports (infrastructure ready)
+- [ ] Build report customization UI (backend endpoints ready)
+- [ ] Test report generation and delivery

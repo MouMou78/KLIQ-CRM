@@ -2307,6 +2307,223 @@ Generate a subject line and email body. Format your response as JSON with "subje
       }),
   }),
   
+  calendar: router({
+    getIntegrations: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { getUserIntegrations } = await import("./calendar-sync");
+        return getUserIntegrations(ctx.user.tenantId, ctx.user.id);
+      }),
+    
+    createIntegration: protectedProcedure
+      .input(z.object({
+        provider: z.enum(["google", "outlook"]),
+        accessToken: z.string(),
+        refreshToken: z.string().optional(),
+        expiresAt: z.date().optional(),
+        calendarId: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { createCalendarIntegration } = await import("./calendar-sync");
+        const integrationId = await createCalendarIntegration({
+          ...input,
+          tenantId: ctx.user.tenantId,
+          userId: ctx.user.id,
+        });
+        return { integrationId };
+      }),
+    
+    deleteIntegration: protectedProcedure
+      .input(z.object({ integrationId: z.string() }))
+      .mutation(async ({ input }) => {
+        const { deleteCalendarIntegration } = await import("./calendar-sync");
+        await deleteCalendarIntegration(input.integrationId);
+        return { success: true };
+      }),
+    
+    syncNow: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        const { syncAllCalendars } = await import("./calendar-sync");
+        return syncAllCalendars(ctx.user.tenantId);
+      }),
+    
+    getEvents: protectedProcedure
+      .input(z.object({
+        startDate: z.date().optional(),
+        endDate: z.date().optional(),
+      }))
+      .query(async ({ input, ctx }) => {
+        const { getCalendarEvents } = await import("./calendar-sync");
+        return getCalendarEvents(ctx.user.tenantId, input.startDate, input.endDate);
+      }),
+    
+    linkEvent: protectedProcedure
+      .input(z.object({
+        eventId: z.string(),
+        entityType: z.enum(["contact", "account", "deal"]),
+        entityId: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const { linkEventToEntity } = await import("./calendar-sync");
+        await linkEventToEntity(input.eventId, input.entityType, input.entityId);
+        return { success: true };
+      }),
+  }),
+  
+  documents: router({
+    upload: protectedProcedure
+      .input(z.object({
+        name: z.string(),
+        description: z.string().optional(),
+        fileBuffer: z.instanceof(Buffer),
+        mimeType: z.string(),
+        linkedEntityType: z.enum(["contact", "account", "deal", "task"]).optional(),
+        linkedEntityId: z.string().optional(),
+        folderId: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { uploadDocument } = await import("./document-manager");
+        return uploadDocument({
+          ...input,
+          tenantId: ctx.user.tenantId,
+          uploadedById: ctx.user.id,
+        });
+      }),
+    
+    uploadVersion: protectedProcedure
+      .input(z.object({
+        documentId: z.string(),
+        fileBuffer: z.instanceof(Buffer),
+        changeNote: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { uploadDocumentVersion } = await import("./document-manager");
+        return uploadDocumentVersion(
+          input.documentId,
+          input.fileBuffer,
+          ctx.user.id,
+          input.changeNote
+        );
+      }),
+    
+    list: protectedProcedure
+      .input(z.object({ folderId: z.string().nullable().optional() }))
+      .query(async ({ input, ctx }) => {
+        const { getDocuments } = await import("./document-manager");
+        return getDocuments(ctx.user.tenantId, input.folderId);
+      }),
+    
+    getEntityDocuments: protectedProcedure
+      .input(z.object({
+        entityType: z.enum(["contact", "account", "deal", "task"]),
+        entityId: z.string(),
+      }))
+      .query(async ({ input, ctx }) => {
+        const { getEntityDocuments } = await import("./document-manager");
+        return getEntityDocuments(ctx.user.tenantId, input.entityType, input.entityId);
+      }),
+    
+    getVersions: protectedProcedure
+      .input(z.object({ documentId: z.string() }))
+      .query(async ({ input }) => {
+        const { getDocumentVersions } = await import("./document-manager");
+        return getDocumentVersions(input.documentId);
+      }),
+    
+    delete: protectedProcedure
+      .input(z.object({ documentId: z.string() }))
+      .mutation(async ({ input }) => {
+        const { deleteDocument } = await import("./document-manager");
+        await deleteDocument(input.documentId);
+        return { success: true };
+      }),
+    
+    createFolder: protectedProcedure
+      .input(z.object({
+        name: z.string(),
+        parentFolderId: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { createFolder } = await import("./document-manager");
+        const folderId = await createFolder({
+          ...input,
+          tenantId: ctx.user.tenantId,
+          createdById: ctx.user.id,
+        });
+        return { folderId };
+      }),
+    
+    listFolders: protectedProcedure
+      .input(z.object({ parentFolderId: z.string().nullable().optional() }))
+      .query(async ({ input, ctx }) => {
+        const { getFolders } = await import("./document-manager");
+        return getFolders(ctx.user.tenantId, input.parentFolderId);
+      }),
+    
+    deleteFolder: protectedProcedure
+      .input(z.object({ folderId: z.string() }))
+      .mutation(async ({ input }) => {
+        const { deleteFolder } = await import("./document-manager");
+        await deleteFolder(input.folderId);
+        return { success: true };
+      }),
+  }),
+  
+  reports: router({
+    generatePipeline: protectedProcedure
+      .input(z.object({ format: z.enum(["pdf", "excel"]) }))
+      .mutation(async ({ input, ctx }) => {
+        const { generatePipelineReport } = await import("./report-generator");
+        return generatePipelineReport(ctx.user.tenantId, input.format);
+      }),
+    
+    generateCampaign: protectedProcedure
+      .input(z.object({
+        format: z.enum(["pdf", "excel"]),
+        startDate: z.date().optional(),
+        endDate: z.date().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { generateCampaignReport } = await import("./report-generator");
+        return generateCampaignReport(
+          ctx.user.tenantId,
+          input.format,
+          input.startDate,
+          input.endDate
+        );
+      }),
+    
+    generateActivity: protectedProcedure
+      .input(z.object({
+        format: z.enum(["pdf", "excel"]),
+        startDate: z.date().optional(),
+        endDate: z.date().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { generateActivityReport } = await import("./report-generator");
+        return generateActivityReport(
+          ctx.user.tenantId,
+          input.format,
+          input.startDate,
+          input.endDate
+        );
+      }),
+    
+    scheduleReport: protectedProcedure
+      .input(z.object({
+        reportType: z.enum(["pipeline", "campaign", "activity"]),
+        format: z.enum(["pdf", "excel"]),
+        frequency: z.enum(["daily", "weekly", "monthly"]),
+        emailTo: z.array(z.string().email()),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { scheduleReport } = await import("./report-generator");
+        return scheduleReport({
+          ...input,
+          tenantId: ctx.user.tenantId,
+        });
+      }),
+  }),
+  
   leadScoring: router({
     getTopLeads: protectedProcedure
       .input(z.object({ limit: z.number().optional() }))

@@ -837,3 +837,121 @@ export const sharedViews = mysqlTable("sharedViews", {
 
 export type SharedView = typeof sharedViews.$inferSelect;
 export type InsertSharedView = typeof sharedViews.$inferInsert;
+
+
+// Calendar Integration
+export const calendarIntegrations = mysqlTable("calendarIntegrations", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenantId", { length: 36 }).notNull(),
+  userId: varchar("userId", { length: 36 }).notNull(),
+  provider: mysqlEnum("provider", ["google", "outlook"]).notNull(),
+  accessToken: text("accessToken").notNull(), // Encrypted
+  refreshToken: text("refreshToken"), // Encrypted
+  expiresAt: timestamp("expiresAt"),
+  calendarId: varchar("calendarId", { length: 255 }), // External calendar ID
+  isActive: boolean("isActive").default(true).notNull(),
+  lastSyncAt: timestamp("lastSyncAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  tenantIdx: index("calendar_integrations_tenant_idx").on(table.tenantId),
+  userIdx: index("calendar_integrations_user_idx").on(table.userId),
+}));
+
+export type CalendarIntegration = typeof calendarIntegrations.$inferSelect;
+export type InsertCalendarIntegration = typeof calendarIntegrations.$inferInsert;
+
+export const calendarEvents = mysqlTable("calendarEvents", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenantId", { length: 36 }).notNull(),
+  integrationId: varchar("integrationId", { length: 36 }).notNull(),
+  externalEventId: varchar("externalEventId", { length: 255 }).notNull(), // ID from Google/Outlook
+  title: varchar("title", { length: 500 }).notNull(),
+  description: text("description"),
+  startTime: timestamp("startTime").notNull(),
+  endTime: timestamp("endTime").notNull(),
+  location: text("location"),
+  attendees: json("attendees").$type<string[]>().default([]),
+  isAllDay: boolean("isAllDay").default(false).notNull(),
+  status: mysqlEnum("status", ["confirmed", "tentative", "cancelled"]).default("confirmed").notNull(),
+  // Link to CRM entities
+  linkedContactId: varchar("linkedContactId", { length: 36 }),
+  linkedAccountId: varchar("linkedAccountId", { length: 36 }),
+  linkedDealId: varchar("linkedDealId", { length: 36 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  tenantIdx: index("calendar_events_tenant_idx").on(table.tenantId),
+  integrationIdx: index("calendar_events_integration_idx").on(table.integrationId),
+  externalIdx: index("calendar_events_external_idx").on(table.externalEventId),
+  startTimeIdx: index("calendar_events_start_idx").on(table.startTime),
+  contactIdx: index("calendar_events_contact_idx").on(table.linkedContactId),
+}));
+
+export type CalendarEvent = typeof calendarEvents.$inferSelect;
+export type InsertCalendarEvent = typeof calendarEvents.$inferInsert;
+
+
+// Document Management
+export const documents = mysqlTable("documents", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenantId", { length: 36 }).notNull(),
+  name: varchar("name", { length: 500 }).notNull(),
+  description: text("description"),
+  fileKey: varchar("fileKey", { length: 500 }).notNull(), // S3 key
+  fileUrl: text("fileUrl").notNull(), // S3 URL
+  mimeType: varchar("mimeType", { length: 100 }),
+  fileSize: int("fileSize"), // bytes
+  version: int("version").default(1).notNull(),
+  // Link to CRM entities
+  linkedEntityType: mysqlEnum("linkedEntityType", ["contact", "account", "deal", "task"]),
+  linkedEntityId: varchar("linkedEntityId", { length: 36 }),
+  // Folder organization
+  folderId: varchar("folderId", { length: 36 }),
+  // Metadata
+  uploadedById: varchar("uploadedById", { length: 36 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  tenantIdx: index("documents_tenant_idx").on(table.tenantId),
+  entityIdx: index("documents_entity_idx").on(table.linkedEntityType, table.linkedEntityId),
+  folderIdx: index("documents_folder_idx").on(table.folderId),
+  uploaderIdx: index("documents_uploader_idx").on(table.uploadedById),
+}));
+
+export type Document = typeof documents.$inferSelect;
+export type InsertDocument = typeof documents.$inferInsert;
+
+export const documentVersions = mysqlTable("documentVersions", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  documentId: varchar("documentId", { length: 36 }).notNull(),
+  version: int("version").notNull(),
+  fileKey: varchar("fileKey", { length: 500 }).notNull(),
+  fileUrl: text("fileUrl").notNull(),
+  fileSize: int("fileSize"),
+  uploadedById: varchar("uploadedById", { length: 36 }).notNull(),
+  changeNote: text("changeNote"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  documentIdx: index("document_versions_document_idx").on(table.documentId),
+  versionIdx: index("document_versions_version_idx").on(table.documentId, table.version),
+}));
+
+export type DocumentVersion = typeof documentVersions.$inferSelect;
+export type InsertDocumentVersion = typeof documentVersions.$inferInsert;
+
+export const documentFolders = mysqlTable("documentFolders", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenantId", { length: 36 }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  parentFolderId: varchar("parentFolderId", { length: 36 }),
+  createdById: varchar("createdById", { length: 36 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  tenantIdx: index("document_folders_tenant_idx").on(table.tenantId),
+  parentIdx: index("document_folders_parent_idx").on(table.parentFolderId),
+}));
+
+export type DocumentFolder = typeof documentFolders.$inferSelect;
+export type InsertDocumentFolder = typeof documentFolders.$inferInsert;

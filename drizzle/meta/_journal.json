@@ -169,6 +169,20 @@
       "when": 1770246582936,
       "tag": "0023_romantic_proemial_gods",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "5",
+      "when": 1770246783344,
+      "tag": "0024_fixed_zarda",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1770246892797,
+      "tag": "0025_fuzzy_adam_warlock",
+      "breakpoints": true
     }
   ]
 }
