@@ -771,6 +771,40 @@ export const appRouter = router({
   }),
   
   analytics: router({
+    getDealPipeline: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { getDealPipelineByStage } = await import("./analytics");
+        return getDealPipelineByStage(ctx.user.tenantId);
+      }),
+    
+    getConversionRates: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { getStageConversionRates } = await import("./analytics");
+        return getStageConversionRates(ctx.user.tenantId);
+      }),
+    
+    getDealCycleTime: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { getAverageDealCycleTime } = await import("./analytics");
+        return getAverageDealCycleTime(ctx.user.tenantId);
+      }),
+    
+    getCampaignTrends: protectedProcedure
+      .input(z.object({
+        startDate: z.date().optional(),
+        endDate: z.date().optional(),
+      }))
+      .query(async ({ input, ctx }) => {
+        const { getCampaignPerformanceTrends } = await import("./analytics");
+        return getCampaignPerformanceTrends(ctx.user.tenantId, input.startDate, input.endDate);
+      }),
+    
+    getOverallMetrics: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { getOverallMetrics } = await import("./analytics");
+        return getOverallMetrics(ctx.user.tenantId);
+      }),
+    
     get: protectedProcedure
       .input(z.object({
         timeRange: z.enum(["last_4_weeks", "last_8_weeks", "last_12_weeks"]).default("last_8_weeks"),
@@ -1891,7 +1925,7 @@ Generate a subject line and email body. Format your response as JSON with "subje
         return { success: true };
       }),
   }),
-
+  
   campaigns: router({
     list: protectedProcedure
       .query(async ({ ctx }) => {
@@ -2114,6 +2148,96 @@ Generate a subject line and email body. Format your response as JSON with "subje
       .input(z.object({ id: z.string() }))
       .mutation(async ({ input }) => {
         await db.deleteAccount(input.id);
+        return { success: true };
+      }),
+  }),
+  
+  tasks: router({
+    list: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { getTasksByTenant } = await import("./db-tasks");
+        return getTasksByTenant(ctx.user.tenantId);
+      }),
+    
+    getByAssignee: protectedProcedure
+      .input(z.object({
+        assignedToId: z.string(),
+      }))
+      .query(async ({ input, ctx }) => {
+        const { getTasksByAssignee } = await import("./db-tasks");
+        return getTasksByAssignee(ctx.user.tenantId, input.assignedToId);
+      }),
+    
+    getByEntity: protectedProcedure
+      .input(z.object({
+        entityType: z.enum(["deal", "contact", "account"]),
+        entityId: z.string(),
+      }))
+      .query(async ({ input, ctx }) => {
+        const { getTasksByEntity } = await import("./db-tasks");
+        return getTasksByEntity(ctx.user.tenantId, input.entityType, input.entityId);
+      }),
+    
+    getOverdue: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { getOverdueTasks } = await import("./db-tasks");
+        return getOverdueTasks(ctx.user.tenantId);
+      }),
+    
+    create: protectedProcedure
+      .input(z.object({
+        title: z.string(),
+        description: z.string().optional(),
+        priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
+        dueDate: z.date().optional(),
+        assignedToId: z.string().optional(),
+        linkedEntityType: z.enum(["deal", "contact", "account"]).optional(),
+        linkedEntityId: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { createTask } = await import("./db-tasks");
+        const taskId = await createTask({
+          tenantId: ctx.user.tenantId,
+          createdById: ctx.user.id,
+          ...input,
+        });
+        return { taskId };
+      }),
+    
+    update: protectedProcedure
+      .input(z.object({
+        taskId: z.string(),
+        title: z.string().optional(),
+        description: z.string().optional(),
+        status: z.enum(["todo", "in_progress", "completed", "cancelled"]).optional(),
+        priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
+        dueDate: z.date().optional(),
+        assignedToId: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { updateTask } = await import("./db-tasks");
+        const { taskId, ...data } = input;
+        await updateTask(taskId, data);
+        return { success: true };
+      }),
+    
+    complete: protectedProcedure
+      .input(z.object({
+        taskId: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const { completeTask } = await import("./db-tasks");
+        await completeTask(input.taskId);
+        return { success: true };
+      }),
+    
+    delete: protectedProcedure
+      .input(z.object({
+        taskId: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const { deleteTask } = await import("./db-tasks");
+        await deleteTask(input.taskId);
         return { success: true };
       }),
   }),

@@ -1052,3 +1052,35 @@
 - [x] Add preview before final import
 - [x] Handle large file uploads (1000+ contacts)
 - [ ] Test with various CSV formats and encodings
+
+
+## New Features - Automation, Reporting & Tasks
+
+### Email Sequence Automation
+- [x] Design sequence trigger system (no reply, email opened, link clicked)
+- [x] Create sequence step management (delays, conditions)
+- [x] Implement automatic follow-up sending
+- [x] Add sequence enrollment tracking
+- [x] Create sequence performance analytics
+- [ ] Build sequence builder UI
+- [ ] Test trigger conditions and timing
+
+### Reporting Dashboard
+- [x] Design analytics dashboard layout
+- [x] Implement deal pipeline value by stage chart
+- [x] Add conversion rate between stages visualization
+- [x] Calculate and display average deal cycle time
+- [x] Create campaign performance trends over time
+- [ ] Add date range filtering for reports
+- [ ] Implement export functionality for reports
+- [ ] Test with real data and edge cases
+
+### Task Management System
+- [x] Design tasks schema with due dates and assignments
+- [x] Create task CRUD endpoints
+- [x] Implement task-to-entity linking (deals, contacts, accounts)
+- [x] Build task list UI with filtering and sorting
+- [ ] Add task creation from deal/contact pages
+- [ ] Implement due date reminders
+- [ ] Create task assignment notifications
+- [ ] Test task workflows and notifications

@@ -671,3 +671,31 @@ export const deals = mysqlTable("deals", {
 
 export type Deal = typeof deals.$inferSelect;
 export type InsertDeal = typeof deals.$inferInsert;
+
+
+// Tasks
+export const tasks = mysqlTable("tasks", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenantId", { length: 36 }).notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  status: mysqlEnum("status", ["todo", "in_progress", "completed", "cancelled"]).default("todo").notNull(),
+  priority: mysqlEnum("priority", ["low", "medium", "high", "urgent"]).default("medium").notNull(),
+  dueDate: timestamp("dueDate"),
+  assignedToId: varchar("assignedToId", { length: 36 }),
+  createdById: varchar("createdById", { length: 36 }).notNull(),
+  // Link to entities
+  linkedEntityType: mysqlEnum("linkedEntityType", ["deal", "contact", "account"]),
+  linkedEntityId: varchar("linkedEntityId", { length: 36 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  completedAt: timestamp("completedAt"),
+}, (table) => ({
+  tenantIdx: index("tasks_tenant_idx").on(table.tenantId),
+  assignedIdx: index("tasks_assigned_idx").on(table.assignedToId),
+  dueIdx: index("tasks_due_idx").on(table.dueDate),
+  linkedIdx: index("tasks_linked_idx").on(table.linkedEntityType, table.linkedEntityId),
+}));
+
+export type Task = typeof tasks.$inferSelect;
+export type InsertTask = typeof tasks.$inferInsert;
