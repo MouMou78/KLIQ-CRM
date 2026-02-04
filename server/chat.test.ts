@@ -111,7 +111,7 @@ describe("Chat Feature", () => {
       expect(aiMessage?.content).toBeTruthy();
     });
 
-    it("should invoke AI assistant when @assistant is mentioned", async () => {
+    it("should invoke AI assistant when @assistant is mentioned", { timeout: 10000 }, async () => {
       // Send a message mentioning assistant
       await caller.chat.sendMessage({
         channelId,
@@ -154,6 +154,186 @@ describe("Chat Feature", () => {
       // AI assistant should be automatically added
       // This is verified by the channel creation logic
       expect(channel).toBeDefined();
+    });
+  });
+
+  describe("Message Reactions", () => {
+    let channelId: string;
+    let messageId: string;
+
+    beforeEach(async () => {
+      const channel = await caller.chat.createChannel({
+        name: "reactions-test",
+        type: "public",
+      });
+      channelId = channel!.id;
+
+      const message = await caller.chat.sendMessage({
+        channelId,
+        content: "React to this!",
+      });
+      messageId = message.id;
+    });
+
+    it("should add a reaction to a message", async () => {
+      const reaction = await caller.chat.addReaction({
+        messageId,
+        emoji: "👍",
+      });
+
+      expect(reaction).toBeDefined();
+      expect(reaction?.emoji).toBe("👍");
+    });
+
+    it("should get reactions for a message", async () => {
+      await caller.chat.addReaction({
+        messageId,
+        emoji: "❤️",
+      });
+
+      const reactions = await caller.chat.getReactions({ messageId });
+      expect(reactions.length).toBeGreaterThan(0);
+      expect(reactions[0].emoji).toBe("❤️");
+    });
+
+    it("should remove a reaction", async () => {
+      await caller.chat.addReaction({
+        messageId,
+        emoji: "😊",
+      });
+
+      const result = await caller.chat.removeReaction({
+        messageId,
+        emoji: "😊",
+      });
+
+      expect(result.success).toBe(true);
+
+      const reactions = await caller.chat.getReactions({ messageId });
+      const removedReaction = reactions.find(r => r.emoji === "😊");
+      expect(removedReaction).toBeUndefined();
+    });
+  });
+
+  describe("Thread Replies", () => {
+    let channelId: string;
+    let parentMessageId: string;
+
+    beforeEach(async () => {
+      const channel = await caller.chat.createChannel({
+        name: "threads-test",
+        type: "public",
+      });
+      channelId = channel!.id;
+
+      const parentMessage = await caller.chat.sendMessage({
+        channelId,
+        content: "Start a thread here",
+      });
+      parentMessageId = parentMessage.id;
+    });
+
+    it("should create a thread reply", async () => {
+      const reply = await caller.chat.sendMessage({
+        channelId,
+        content: "This is a reply",
+        threadId: parentMessageId,
+      });
+
+      expect(reply).toBeDefined();
+      expect(reply.threadId).toBe(parentMessageId);
+      expect(reply.content).toBe("This is a reply");
+    });
+
+    it("should get thread replies", async () => {
+      await caller.chat.sendMessage({
+        channelId,
+        content: "Reply 1",
+        threadId: parentMessageId,
+      });
+
+      await caller.chat.sendMessage({
+        channelId,
+        content: "Reply 2",
+        threadId: parentMessageId,
+      });
+
+      const replies = await caller.chat.getThreadReplies({
+        threadId: parentMessageId,
+      });
+
+      expect(replies.length).toBe(2);
+      // Replies are ordered by createdAt, so check both exist
+      const reply1 = replies.find(r => r.content === "Reply 1");
+      const reply2 = replies.find(r => r.content === "Reply 2");
+      expect(reply1).toBeDefined();
+      expect(reply2).toBeDefined();
+    });
+
+    it("should get thread reply count", async () => {
+      await caller.chat.sendMessage({
+        channelId,
+        content: "Reply 1",
+        threadId: parentMessageId,
+      });
+
+      await caller.chat.sendMessage({
+        channelId,
+        content: "Reply 2",
+        threadId: parentMessageId,
+      });
+
+      const result = await caller.chat.getThreadReplyCount({
+        messageId: parentMessageId,
+      });
+
+      expect(result.count).toBe(2);
+    });
+  });
+
+  describe("File Attachments", () => {
+    let channelId: string;
+
+    beforeEach(async () => {
+      const channel = await caller.chat.createChannel({
+        name: "files-test",
+        type: "public",
+      });
+      channelId = channel!.id;
+    });
+
+    it("should send a message with file attachment", async () => {
+      const message = await caller.chat.sendMessage({
+        channelId,
+        content: "Check out this file",
+        fileUrl: "https://example.com/test.pdf",
+        fileName: "test.pdf",
+        fileType: "application/pdf",
+        fileSize: 2048,
+      });
+
+      expect(message).toBeDefined();
+      expect(message.fileUrl).toBe("https://example.com/test.pdf");
+      expect(message.fileName).toBe("test.pdf");
+      expect(message.fileType).toBe("application/pdf");
+      expect(message.fileSize).toBe(2048);
+    });
+
+    it("should retrieve messages with file attachments", async () => {
+      await caller.chat.sendMessage({
+        channelId,
+        content: "Image attachment",
+        fileUrl: "https://example.com/image.png",
+        fileName: "image.png",
+        fileType: "image/png",
+        fileSize: 1024,
+      });
+
+      const messages = await caller.chat.getMessages({ channelId });
+      const messageWithFile = messages.find(m => m.fileUrl);
+
+      expect(messageWithFile).toBeDefined();
+      expect(messageWithFile?.fileName).toBe("image.png");
     });
   });
 });

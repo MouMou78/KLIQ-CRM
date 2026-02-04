@@ -657,6 +657,8 @@
 - [x] Display AI assistant online status indicator
 - [x] Show AI assistant info in channel details panel
 - [x] Add AI assistant avatar with distinct styling
+- [x] Add AI Assistant badge/icon to channel list items
+- [x] Show AI presence indicator in channel header
 
 ### Direct Messages
 - [x] Create DM section in sidebar
@@ -666,17 +668,20 @@
 - [ ] Show user online/offline status
 
 ### Thread Replies
-- [ ] Add "Reply in thread" button to messages
-- [ ] Create thread view panel
-- [ ] Show thread reply count on parent messages
-- [ ] Navigate between main channel and threads
+- [x] Add "Reply in thread" button to messages
+- [x] Create thread view panel
+- [x] Show thread reply count on parent messages
+- [x] Navigate between main channel and threads
+- [x] Update backend to support threadId in messages
 
 ### Reactions & File Sharing
-- [ ] Add emoji reaction picker to messages
-- [ ] Display reactions with counts below messages
-- [ ] Implement file upload functionality
-- [ ] Show file previews for images
-- [ ] Add download links for other file types
+- [x] Add emoji reaction picker to messages
+- [x] Display reactions with counts below messages
+- [x] Store reactions in database
+- [x] Implement file upload functionality with S3
+- [x] Show file previews for images
+- [x] Add download links for other file types
+- [ ] Support drag-and-drop file upload (deferred)
 
 ### Testing
 - [ ] Write tests for DM functionality

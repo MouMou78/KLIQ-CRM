@@ -78,6 +78,13 @@
       "when": 1770205898883,
       "tag": "0010_chief_gabe_jones",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1770208677548,
+      "tag": "0011_shocking_doorman",
+      "breakpoints": true
     }
   ]
 }

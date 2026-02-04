@@ -1188,6 +1188,10 @@ Generate a subject line and email body. Format your response as JSON with "subje
         channelId: z.string(),
         content: z.string().min(1),
         threadId: z.string().optional(),
+        fileUrl: z.string().optional(),
+        fileName: z.string().optional(),
+        fileType: z.string().optional(),
+        fileSize: z.number().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         const { randomUUID } = await import("crypto");
@@ -1198,6 +1202,10 @@ Generate a subject line and email body. Format your response as JSON with "subje
           userId: ctx.user.id,
           content: input.content,
           threadId: input.threadId,
+          fileUrl: input.fileUrl,
+          fileName: input.fileName,
+          fileType: input.fileType,
+          fileSize: input.fileSize,
         });
         
         // Check if AI assistant was mentioned
@@ -1276,6 +1284,66 @@ Generate a subject line and email body. Format your response as JSON with "subje
       .query(async ({ ctx }) => {
         const conversations = await db.getDirectMessageConversations(ctx.user.id);
         return conversations;
+      }),
+    
+    // Reactions
+    addReaction: protectedProcedure
+      .input(z.object({
+        messageId: z.string(),
+        emoji: z.string(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { randomUUID } = await import("crypto");
+        const reaction = await db.addReaction({
+          id: randomUUID(),
+          messageId: input.messageId,
+          userId: ctx.user.id,
+          emoji: input.emoji,
+        });
+        return reaction;
+      }),
+    
+    removeReaction: protectedProcedure
+      .input(z.object({
+        messageId: z.string(),
+        emoji: z.string(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const success = await db.removeReaction(
+          input.messageId,
+          ctx.user.id,
+          input.emoji
+        );
+        return { success };
+      }),
+    
+    getReactions: protectedProcedure
+      .input(z.object({
+        messageId: z.string(),
+      }))
+      .query(async ({ input }) => {
+        const reactions = await db.getReactionsByMessage(input.messageId);
+        return reactions;
+      }),
+    
+    // Thread Replies
+    getThreadReplies: protectedProcedure
+      .input(z.object({
+        threadId: z.string(),
+        limit: z.number().optional(),
+      }))
+      .query(async ({ input }) => {
+        const replies = await db.getThreadReplies(input.threadId, input.limit);
+        return replies;
+      }),
+    
+    getThreadReplyCount: protectedProcedure
+      .input(z.object({
+        messageId: z.string(),
+      }))
+      .query(async ({ input }) => {
+        const count = await db.getThreadReplyCount(input.messageId);
+        return { count };
       }),
   }),
 });

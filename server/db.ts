@@ -622,6 +622,10 @@ export async function getMessagesByChannel(channelId: string, limit = 100) {
       userId: messages.userId,
       content: messages.content,
       threadId: messages.threadId,
+      fileUrl: messages.fileUrl,
+      fileName: messages.fileName,
+      fileType: messages.fileType,
+      fileSize: messages.fileSize,
       createdAt: messages.createdAt,
       updatedAt: messages.updatedAt,
       deletedAt: messages.deletedAt,
@@ -638,7 +642,7 @@ export async function getMessagesByChannel(channelId: string, limit = 100) {
     .limit(limit);
 }
 
-export async function createMessage(data: { id: string; tenantId: string; channelId: string; userId: string; content: string; threadId?: string }) {
+export async function createMessage(data: { id: string; tenantId: string; channelId: string; userId: string; content: string; threadId?: string; fileUrl?: string; fileName?: string; fileType?: string; fileSize?: number }) {
   const db = await getDb();
   if (!db) return null;
 
@@ -766,4 +770,115 @@ export async function getDirectMessageConversations(userId: string) {
   }
 
   return Array.from(uniqueConversations.values());
+}
+
+// Message Reactions
+export async function addReaction(data: { id: string; messageId: string; userId: string; emoji: string }) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const { messageReactions } = await import("../drizzle/schema");
+  try {
+    await db.insert(messageReactions).values(data);
+    const results = await db
+      .select()
+      .from(messageReactions)
+      .where(eq(messageReactions.id, data.id))
+      .limit(1);
+    return results[0] || null;
+  } catch (error) {
+    // Handle duplicate reaction (user already reacted with this emoji)
+    return null;
+  }
+}
+
+export async function removeReaction(messageId: string, userId: string, emoji: string) {
+  const db = await getDb();
+  if (!db) return false;
+
+  const { messageReactions } = await import("../drizzle/schema");
+  const { and, eq } = await import("drizzle-orm");
+  
+  await db
+    .delete(messageReactions)
+    .where(
+      and(
+        eq(messageReactions.messageId, messageId),
+        eq(messageReactions.userId, userId),
+        eq(messageReactions.emoji, emoji)
+      )
+    );
+  return true;
+}
+
+export async function getReactionsByMessage(messageId: string) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const { messageReactions, users } = await import("../drizzle/schema");
+  return db
+    .select({
+      id: messageReactions.id,
+      messageId: messageReactions.messageId,
+      userId: messageReactions.userId,
+      emoji: messageReactions.emoji,
+      createdAt: messageReactions.createdAt,
+      user: {
+        id: users.id,
+        name: users.name,
+      },
+    })
+    .from(messageReactions)
+    .leftJoin(users, eq(messageReactions.userId, users.id))
+    .where(eq(messageReactions.messageId, messageId))
+    .orderBy(messageReactions.createdAt);
+}
+
+// Thread Replies
+export async function getThreadReplies(threadId: string, limit = 100) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const { messages, users } = await import("../drizzle/schema");
+  return db
+    .select({
+      id: messages.id,
+      tenantId: messages.tenantId,
+      channelId: messages.channelId,
+      userId: messages.userId,
+      content: messages.content,
+      threadId: messages.threadId,
+      fileUrl: messages.fileUrl,
+      fileName: messages.fileName,
+      fileType: messages.fileType,
+      fileSize: messages.fileSize,
+      createdAt: messages.createdAt,
+      updatedAt: messages.updatedAt,
+      deletedAt: messages.deletedAt,
+      user: {
+        id: users.id,
+        name: users.name,
+        email: users.email,
+      },
+    })
+    .from(messages)
+    .leftJoin(users, eq(messages.userId, users.id))
+    .where(eq(messages.threadId, threadId))
+    .orderBy(messages.createdAt)
+    .limit(limit);
+}
+
+export async function getThreadReplyCount(messageId: string) {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const { messages } = await import("../drizzle/schema");
+  const { sql } = await import("drizzle-orm");
+  
+  const results = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(messages)
+    .where(eq(messages.threadId, messageId));
+  
+  return results[0]?.count || 0;
 }

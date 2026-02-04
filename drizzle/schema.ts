@@ -454,6 +454,10 @@ export const messages = mysqlTable("messages", {
   userId: varchar("userId", { length: 36 }).notNull(),
   content: text("content").notNull(),
   threadId: varchar("threadId", { length: 36 }), // null for top-level, references another message for replies
+  fileUrl: text("fileUrl"),
+  fileName: varchar("fileName", { length: 255 }),
+  fileType: varchar("fileType", { length: 100 }),
+  fileSize: int("fileSize"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt"),
   deletedAt: timestamp("deletedAt"),

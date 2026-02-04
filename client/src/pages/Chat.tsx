@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Send, Hash, Lock, Plus, Users, Search, Smile, Bot, Circle } from "lucide-react";
+import { Send, Hash, Lock, Plus, Users, Search, Smile, Bot, Circle, MessageSquare, CornerDownRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 
 export default function Chat() {
   const { user } = useAuth();
@@ -32,6 +33,12 @@ export default function Chat() {
   const [selectedDmUserId, setSelectedDmUserId] = useState<string | null>(null);
   const [isNewDmOpen, setIsNewDmOpen] = useState(false);
   const [newDmUserId, setNewDmUserId] = useState("");
+  const [showThreadPanel, setShowThreadPanel] = useState(false);
+  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null); // messageId or null
+  const [replyingToMessage, setReplyingToMessage] = useState<any | null>(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   // Fetch channels
   const { data: channels = [], refetch: refetchChannels } = trpc.chat.getChannels.useQuery();
@@ -76,6 +83,9 @@ export default function Chat() {
       setMessageContent("");
     },
   });
+  
+  const addReactionMutation = trpc.chat.addReaction.useMutation();
+  const removeReactionMutation = trpc.chat.removeReaction.useMutation();
 
   const handleCreateChannel = () => {
     if (!newChannelName.trim()) return;
@@ -86,20 +96,85 @@ export default function Chat() {
     });
   };
 
-  const handleSendMessage = () => {
-    if (!messageContent.trim()) return;
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Check file size (16MB limit)
+    if (file.size > 16 * 1024 * 1024) {
+      alert("File size must be less than 16MB");
+      return;
+    }
+    
+    setSelectedFile(file);
+  };
+  
+  const handleSendMessage = async () => {
+    if (!messageContent.trim() && !selectedFile) return;
+    
+    let fileUrl, fileName, fileType, fileSize;
+    
+    // Upload file if selected
+    if (selectedFile) {
+      setUploadingFile(true);
+      try {
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        
+        const response = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+        
+        if (!response.ok) throw new Error("Upload failed");
+        
+        const data = await response.json();
+        fileUrl = data.url;
+        fileName = selectedFile.name;
+        fileType = selectedFile.type;
+        fileSize = selectedFile.size;
+      } catch (error) {
+        console.error("File upload error:", error);
+        alert("Failed to upload file");
+        setUploadingFile(false);
+        return;
+      } finally {
+        setUploadingFile(false);
+      }
+    }
     
     if (selectedChannelId) {
       sendMessageMutation.mutate({
         channelId: selectedChannelId,
-        content: messageContent,
+        content: messageContent || "Shared a file",
+        threadId: replyingToMessage?.id,
+        fileUrl,
+        fileName,
+        fileType,
+        fileSize,
       });
+      setReplyingToMessage(null);
+      setSelectedFile(null);
     } else if (selectedDmUserId) {
       sendDmMutation.mutate({
         recipientId: selectedDmUserId,
-        content: messageContent,
+        content: messageContent || "Shared a file",
       });
+      setSelectedFile(null);
     }
+  };
+  
+  const handleEmojiClick = (messageId: string, emojiData: EmojiClickData) => {
+    addReactionMutation.mutate({
+      messageId,
+      emoji: emojiData.emoji,
+    });
+    setShowEmojiPicker(null);
+  };
+  
+  const handleReplyInThread = (message: any) => {
+    setSelectedThreadId(message.id);
+    setShowThreadPanel(true);
   };
 
   const selectedChannel = channels.find((c) => c.id === selectedChannelId);
@@ -205,7 +280,10 @@ export default function Chat() {
                   ) : (
                     <Lock className="h-4 w-4" />
                   )}
-                  <span className="truncate">{channel.name}</span>
+                  <span className="truncate flex-1 text-left">{channel.name}</span>
+                  <div title="AI Assistant is present">
+                    <Bot className="h-3 w-3 text-primary" />
+                  </div>
                 </button>
               ))}
               {channels.length === 0 && (
@@ -328,8 +406,14 @@ export default function Chat() {
                     ) : (
                       <Lock className="h-5 w-5" />
                     )}
-                    <div>
-                      <h3 className="font-semibold">{selectedChannel.name}</h3>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">{selectedChannel.name}</h3>
+                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs">
+                          <Bot className="h-3 w-3" />
+                          <span>AI</span>
+                        </div>
+                      </div>
                       {selectedChannel.description && (
                         <p className="text-xs text-muted-foreground">{selectedChannel.description}</p>
                       )}
@@ -386,6 +470,63 @@ export default function Chat() {
                           </span>
                         </div>
                         <p className="text-sm mt-1 whitespace-pre-wrap">{message.content}</p>
+                        
+                        {/* File Attachment */}
+                        {message.fileUrl && (
+                          <div className="mt-2">
+                            {message.fileType?.startsWith("image/") ? (
+                              <img
+                                src={message.fileUrl}
+                                alt={message.fileName || "Image"}
+                                className="max-w-xs rounded-lg border"
+                              />
+                            ) : (
+                              <a
+                                href={message.fileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 px-3 py-2 bg-accent rounded-md text-sm hover:bg-accent/80"
+                              >
+                                <span>📎</span>
+                                <span>{message.fileName || "Download file"}</span>
+                                {message.fileSize && (
+                                  <span className="text-muted-foreground">({(message.fileSize / 1024).toFixed(1)} KB)</span>
+                                )}
+                              </a>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Message Actions */}
+                        <div className="flex items-center gap-2 mt-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs"
+                            onClick={() => setShowEmojiPicker(showEmojiPicker === message.id ? null : message.id)}
+                          >
+                            <Smile className="h-3 w-3 mr-1" />
+                            React
+                          </Button>
+                          {selectedChannel && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-xs"
+                              onClick={() => handleReplyInThread(message)}
+                            >
+                              <MessageSquare className="h-3 w-3 mr-1" />
+                              Reply in thread
+                            </Button>
+                          )}
+                        </div>
+                        
+                        {/* Emoji Picker */}
+                        {showEmojiPicker === message.id && (
+                          <div className="absolute z-50 mt-2">
+                            <EmojiPicker onEmojiClick={(emojiData) => handleEmojiClick(message.id, emojiData)} />
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -400,7 +541,53 @@ export default function Chat() {
 
             {/* Message Input */}
             <div className="p-4 border-t">
+              {replyingToMessage && (
+                <div className="mb-2 p-2 bg-accent/30 rounded-md flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm">
+                    <CornerDownRight className="h-4 w-4" />
+                    <span className="text-muted-foreground">Replying to {replyingToMessage.user?.name || "Unknown User"}</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2"
+                    onClick={() => setReplyingToMessage(null)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
+              {selectedFile && (
+                <div className="mb-2 p-2 bg-accent/30 rounded-md flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground">📎 {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2"
+                    onClick={() => setSelectedFile(null)}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              )}
               <div className="flex gap-2">
+                <input
+                  type="file"
+                  id="file-upload"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                  accept="image/*,video/*,.pdf,.doc,.docx,.txt"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => document.getElementById("file-upload")?.click()}
+                  disabled={uploadingFile}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
                 <div className="flex-1">
                   <Input
                     placeholder={selectedChannel ? `Message #${selectedChannel.name} (type @ai or @assistant to invoke AI)` : `Message ${selectedDmUserId}`}
@@ -412,14 +599,15 @@ export default function Chat() {
                         handleSendMessage();
                       }
                     }}
+                    disabled={uploadingFile}
                   />
                 </div>
                 <Button
                   size="icon"
                   onClick={handleSendMessage}
-                  disabled={!messageContent.trim()}
+                  disabled={(!messageContent.trim() && !selectedFile) || uploadingFile}
                 >
-                  <Send className="h-4 w-4" />
+                  {uploadingFile ? "..." : <Send className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
@@ -433,6 +621,17 @@ export default function Chat() {
           </div>
         )}
       </div>
+
+      {/* Thread Panel */}
+      {showThreadPanel && selectedThreadId && (
+        <ThreadPanel
+          threadId={selectedThreadId}
+          onClose={() => {
+            setShowThreadPanel(false);
+            setSelectedThreadId(null);
+          }}
+        />
+      )}
 
       {/* Members Panel */}
       {showMembersPanel && selectedChannel && (
@@ -479,6 +678,122 @@ export default function Chat() {
           </ScrollArea>
         </div>
       )}
+    </div>
+  );
+}
+
+// Thread Panel Component
+function ThreadPanel({ threadId, onClose }: { threadId: string; onClose: () => void }) {
+  const { user } = useAuth();
+  const [replyContent, setReplyContent] = useState("");
+  
+  // Fetch parent message
+  const { data: parentMessage } = trpc.chat.getMessages.useQuery(
+    { channelId: "", limit: 1 },
+    { enabled: false }
+  );
+  
+  // Fetch thread replies
+  const { data: replies = [] } = trpc.chat.getThreadReplies.useQuery(
+    { threadId, limit: 100 },
+    { enabled: !!threadId, refetchInterval: 3000 }
+  );
+  
+  const sendMessageMutation = trpc.chat.sendMessage.useMutation({
+    onSuccess: () => {
+      setReplyContent("");
+    },
+  });
+  
+  const handleSendReply = () => {
+    if (!replyContent.trim()) return;
+    
+    // Get channelId from first reply or parent message
+    const channelId = replies[0]?.channelId;
+    if (!channelId) return;
+    
+    sendMessageMutation.mutate({
+      channelId,
+      content: replyContent,
+      threadId,
+    });
+  };
+  
+  return (
+    <div className="w-96 border-l bg-background flex flex-col">
+      {/* Header */}
+      <div className="p-4 border-b flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="h-5 w-5" />
+          <h3 className="font-semibold">Thread</h3>
+        </div>
+        <Button variant="ghost" size="sm" onClick={onClose}>
+          Close
+        </Button>
+      </div>
+      
+      {/* Thread Messages */}
+      <ScrollArea className="flex-1 p-4">
+        <div className="space-y-4">
+          {replies.map((message: any) => {
+            const isAI = message.userId === "ai-assistant-bot";
+            return (
+              <div key={message.id} className={`flex gap-3 ${isAI ? "bg-accent/30 -mx-4 px-4 py-3 rounded-lg" : ""}`}>
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className={isAI ? "bg-primary text-primary-foreground" : ""}>
+                    {isAI ? "AI" : (message.user?.name?.charAt(0) || "U")}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <div className="flex items-baseline gap-2">
+                    <span className={`font-semibold text-sm ${isAI ? "text-primary" : ""}`}>
+                      {isAI ? "AI Assistant" : (message.user?.name || "Unknown User")}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(message.createdAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                  <p className="text-sm mt-1 whitespace-pre-wrap">{message.content}</p>
+                </div>
+              </div>
+            );
+          })}
+          {replies.length === 0 && (
+            <div className="text-center text-muted-foreground py-8">
+              <p>No replies yet. Start the thread!</p>
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+      
+      {/* Reply Input */}
+      <div className="p-4 border-t">
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <Input
+              placeholder="Reply to thread..."
+              value={replyContent}
+              onChange={(e) => setReplyContent(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendReply();
+                }
+              }}
+            />
+          </div>
+          <Button
+            size="icon"
+            onClick={handleSendReply}
+            disabled={!replyContent.trim()}
+          >
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
