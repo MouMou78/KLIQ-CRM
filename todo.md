@@ -1931,3 +1931,7 @@
 - [x] Check schema for automationExecutions table
 - [x] Create migration if table is missing
 - [x] Test templates-marketplace page
+
+## Theme Toggle Icon Fix
+- [x] Update theme toggle button to use sun/moon icons instead of system settings icon
+- [x] Test theme toggle clarity in browser
