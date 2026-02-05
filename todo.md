@@ -1714,3 +1714,33 @@
 - [x] Implement template installation backend procedure
 - [x] Add "Installed" badge for already-installed templates
 - [x] Test template browsing, preview, and installation workflow
+
+
+## Template Ratings and Reviews
+- [x] Create templateReviews database table (id, templateId, userId, rating, review, createdAt)
+- [x] Add rating display to template cards (average rating, review count)
+- [x] Build review submission dialog with star rating and text feedback
+- [x] Implement backend procedures for submitting and fetching reviews
+- [x] Add review list view in template preview dialog
+- [x] Sort templates by rating in marketplace
+- [x] Test rating and review workflow
+
+## Template Usage Analytics
+- [x] Create templateAnalytics table (id, templateId, installCount, successRate, lastUsed)
+- [x] Track template installations in installTemplate mutation
+- [x] Add analytics display to template cards (X installations, Y% success)
+- [x] Build analytics dashboard showing most popular templates
+- [x] Implement success rate calculation based on rule executions
+- [x] Add trending templates section based on recent installations
+- [x] Test analytics tracking and display
+
+## Custom Template Builder
+- [x] Add "Save as Template" button to WorkflowAutomation page
+- [x] Create userTemplates database table (id, userId, tenantId, name, description, isPublic, baseTemplate)
+- [x] Build template creation dialog with metadata fields
+- [x] Implement backend procedure to save rule as template
+- [x] Add "My Templates" tab in TemplatesMarketplace
+- [x] Allow users to edit and delete their custom templates
+- [x] Add optional template sharing (make public to marketplace)
+- [x] Show template author and creation date for user templates
+- [x] Test custom template creation, editing, and sharing workflow

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Zap, Play, Pause, Trash2, History, Lightbulb, TestTube, Copy } from "lucide-react";
+import { Plus, Zap, Play, Pause, Trash2, History, Lightbulb, TestTube, Copy, Save } from "lucide-react";
 import { toast } from "sonner";
 import { ConditionBuilder, type ConditionGroup } from "@/components/ConditionBuilder";
 
@@ -41,6 +41,14 @@ export default function WorkflowAutomation() {
   const [showSamples, setShowSamples] = useState(false);
   const [testingRuleId, setTestingRuleId] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<any>(null);
+  const [saveAsTemplateDialogOpen, setSaveAsTemplateDialogOpen] = useState(false);
+  const [selectedRuleForTemplate, setSelectedRuleForTemplate] = useState<any>(null);
+  const [templateForm, setTemplateForm] = useState({
+    name: "",
+    description: "",
+    category: "lead_nurturing" as const,
+    isPublic: false,
+  });
   const { data: executions } = trpc.automation.getExecutions.useQuery({ ruleId: undefined });
 
   const createMutation = trpc.automation.createRule.useMutation({
@@ -86,11 +94,23 @@ export default function WorkflowAutomation() {
 
   const cloneMutation = trpc.automation.cloneRule.useMutation({
     onSuccess: () => {
-      refetch();
       toast.success("Rule cloned successfully");
+      refetch();
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast.error(`Failed to clone rule: ${error.message}`);
+    },
+  });
+
+  const saveAsTemplateMutation = trpc.automation.saveAsTemplate.useMutation({
+    onSuccess: () => {
+      toast.success("Template saved successfully");
+      setSaveAsTemplateDialogOpen(false);
+      setSelectedRuleForTemplate(null);
+      setTemplateForm({ name: "", description: "", category: "lead_nurturing", isPublic: false });
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to save template: ${error.message}`);
     },
   });
 
@@ -590,6 +610,18 @@ export default function WorkflowAutomation() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
+                            setSelectedRuleForTemplate(rule);
+                            setTemplateForm({ ...templateForm, name: rule.name });
+                            setSaveAsTemplateDialogOpen(true);
+                          }}
+                        >
+                          <Save className="h-3 w-3 mr-1" />
+                          Save as Template
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
                             if (confirm("Are you sure you want to delete this rule?")) {
                               deleteMutation.mutate({ ruleId: rule.id });
                             }
@@ -742,6 +774,74 @@ export default function WorkflowAutomation() {
           </Card>
         </div>
       )}
+
+      {/* Save as Template Dialog */}
+      <Dialog open={saveAsTemplateDialogOpen} onOpenChange={setSaveAsTemplateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save as Template</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div>
+              <Label>Template Name</Label>
+              <Input
+                value={templateForm.name}
+                onChange={(e) => setTemplateForm({ ...templateForm, name: e.target.value })}
+                placeholder="Enter template name"
+              />
+            </div>
+            <div>
+              <Label>Description</Label>
+              <Input
+                value={templateForm.description}
+                onChange={(e) => setTemplateForm({ ...templateForm, description: e.target.value })}
+                placeholder="Describe what this template does"
+              />
+            </div>
+            <div>
+              <Label>Category</Label>
+              <Select
+                value={templateForm.category}
+                onValueChange={(value: any) => setTemplateForm({ ...templateForm, category: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="lead_nurturing">Lead Nurturing</SelectItem>
+                  <SelectItem value="deal_management">Deal Management</SelectItem>
+                  <SelectItem value="task_automation">Task Automation</SelectItem>
+                  <SelectItem value="notifications">Notifications</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={templateForm.isPublic}
+                onCheckedChange={(checked) => setTemplateForm({ ...templateForm, isPublic: checked })}
+              />
+              <Label>Share with community (make public)</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSaveAsTemplateDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (!selectedRuleForTemplate) return;
+                saveAsTemplateMutation.mutate({
+                  ruleId: selectedRuleForTemplate.id,
+                  ...templateForm,
+                });
+              }}
+              disabled={!templateForm.name || saveAsTemplateMutation.isPending}
+            >
+              {saveAsTemplateMutation.isPending ? "Saving..." : "Save Template"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

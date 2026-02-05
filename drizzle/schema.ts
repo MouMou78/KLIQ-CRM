@@ -403,6 +403,87 @@ export const automationExecutions = mysqlTable("automationExecutions", {
 export type AutomationExecution = typeof automationExecutions.$inferSelect;
 export type InsertAutomationExecution = typeof automationExecutions.$inferInsert;
 
+// Template Reviews
+export const templateReviews = mysqlTable("templateReviews", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  templateId: varchar("templateId", { length: 100 }).notNull(),
+  userId: varchar("userId", { length: 36 }).notNull(),
+  tenantId: varchar("tenantId", { length: 36 }).notNull(),
+  rating: int("rating").notNull(), // 1-5
+  review: text("review"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  templateIdx: index("template_idx").on(table.templateId),
+  userIdx: index("user_idx").on(table.userId),
+}));
+
+export type TemplateReview = typeof templateReviews.$inferSelect;
+export type InsertTemplateReview = typeof templateReviews.$inferInsert;
+
+// Template Analytics
+export const templateAnalytics = mysqlTable("templateAnalytics", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  templateId: varchar("templateId", { length: 100 }).notNull().unique(),
+  installCount: int("installCount").default(0).notNull(),
+  successCount: int("successCount").default(0).notNull(),
+  failureCount: int("failureCount").default(0).notNull(),
+  lastInstalledAt: timestamp("lastInstalledAt"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  templateIdx: index("template_idx").on(table.templateId),
+}));
+
+export type TemplateAnalytics = typeof templateAnalytics.$inferSelect;
+export type InsertTemplateAnalytics = typeof templateAnalytics.$inferInsert;
+
+// User Templates
+export const userTemplates = mysqlTable("userTemplates", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("userId", { length: 36 }).notNull(),
+  tenantId: varchar("tenantId", { length: 36 }).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  category: mysqlEnum("category", ["lead_nurturing", "deal_management", "task_automation", "notifications"]).notNull(),
+  triggerType: mysqlEnum("triggerType", [
+    "email_opened",
+    "email_replied",
+    "no_reply_after_days",
+    "meeting_held",
+    "stage_entered",
+    "deal_value_threshold",
+    "scheduled"
+  ]).notNull(),
+  triggerConfig: json("triggerConfig").$type<Record<string, any>>().default({}),
+  actionType: mysqlEnum("actionType", [
+    "move_stage",
+    "send_notification",
+    "create_task",
+    "enroll_sequence",
+    "update_field"
+  ]).notNull(),
+  actionConfig: json("actionConfig").$type<Record<string, any>>().default({}),
+  conditions: json("conditions").$type<{
+    logic: 'AND' | 'OR';
+    rules: Array<{
+      field: string;
+      operator: 'equals' | 'not_equals' | 'greater_than' | 'less_than' | 'contains' | 'not_contains' | 'is_empty' | 'is_not_empty';
+      value: any;
+    }>;
+  }>().default({ logic: 'AND', rules: [] }),
+  priority: int("priority").default(0).notNull(),
+  isPublic: boolean("isPublic").default(false).notNull(),
+  baseTemplateId: varchar("baseTemplateId", { length: 100 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  userIdx: index("user_idx").on(table.userId),
+  tenantIdx: index("tenant_idx").on(table.tenantId),
+  publicIdx: index("public_idx").on(table.isPublic),
+}));
+
+export type UserTemplate = typeof userTemplates.$inferSelect;
+export type InsertUserTemplate = typeof userTemplates.$inferInsert;
+
 // Tracking Events for Intent Scoring
 export const trackingEvents = mysqlTable("trackingEvents", {
   id: varchar("id", { length: 36 }).primaryKey(),

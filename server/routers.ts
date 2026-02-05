@@ -2518,6 +2518,7 @@ Generate a subject line and email body. Format your response as JSON with "subje
       .mutation(async ({ input, ctx }) => {
         const { getTemplateById } = await import("./automation-templates");
         const { createAutomationRule } = await import("./db-automation");
+        const { incrementTemplateInstall } = await import("./db-automation-templates");
         
         const template = getTemplateById(input.templateId);
         if (!template) throw new Error("Template not found");
@@ -2535,7 +2536,126 @@ Generate a subject line and email body. Format your response as JSON with "subje
           status: "active",
         });
         
+        // Track installation
+        await incrementTemplateInstall(input.templateId);
+        
         return { ruleId };
+      }),
+    
+    // Template Reviews
+    submitReview: protectedProcedure
+      .input(z.object({
+        templateId: z.string(),
+        rating: z.number().min(1).max(5),
+        review: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { createTemplateReview } = await import("./db-automation-templates");
+        const reviewId = await createTemplateReview({
+          templateId: input.templateId,
+          userId: ctx.user.id,
+          tenantId: ctx.user.tenantId,
+          rating: input.rating,
+          review: input.review,
+        });
+        return { reviewId };
+      }),
+    
+    getReviews: protectedProcedure
+      .input(z.object({ templateId: z.string() }))
+      .query(async ({ input }) => {
+        const { getTemplateReviews } = await import("./db-automation-templates");
+        return getTemplateReviews(input.templateId);
+      }),
+    
+    getRating: protectedProcedure
+      .input(z.object({ templateId: z.string() }))
+      .query(async ({ input }) => {
+        const { getTemplateRating } = await import("./db-automation-templates");
+        return getTemplateRating(input.templateId);
+      }),
+    
+    // Template Analytics
+    getAnalytics: protectedProcedure
+      .input(z.object({ templateId: z.string() }))
+      .query(async ({ input }) => {
+        const { getTemplateAnalytics } = await import("./db-automation-templates");
+        return getTemplateAnalytics(input.templateId);
+      }),
+    
+    getTrending: protectedProcedure
+      .query(async () => {
+        const { getTrendingTemplates } = await import("./db-automation-templates");
+        return getTrendingTemplates(10);
+      }),
+    
+    // User Templates
+    saveAsTemplate: protectedProcedure
+      .input(z.object({
+        ruleId: z.string(),
+        name: z.string(),
+        description: z.string().optional(),
+        category: z.enum(["lead_nurturing", "deal_management", "task_automation", "notifications"]),
+        isPublic: z.boolean().default(false),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { getAutomationRuleById } = await import("./db-automation");
+        const { createUserTemplate } = await import("./db-automation-templates");
+        
+        const rule = await getAutomationRuleById(input.ruleId);
+        if (!rule) throw new Error("Rule not found");
+        
+        const templateId = await createUserTemplate({
+          userId: ctx.user.id,
+          tenantId: ctx.user.tenantId,
+          name: input.name,
+          description: input.description,
+          category: input.category,
+          triggerType: rule.triggerType,
+          triggerConfig: rule.triggerConfig || {},
+          actionType: rule.actionType,
+          actionConfig: rule.actionConfig || {},
+          conditions: rule.conditions,
+          priority: rule.priority,
+          isPublic: input.isPublic,
+          baseTemplateId: undefined,
+        });
+        
+        return { templateId };
+      }),
+    
+    getMyTemplates: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { getUserTemplates } = await import("./db-automation-templates");
+        return getUserTemplates(ctx.user.id, ctx.user.tenantId);
+      }),
+    
+    getPublicTemplates: protectedProcedure
+      .query(async () => {
+        const { getPublicUserTemplates } = await import("./db-automation-templates");
+        return getPublicUserTemplates();
+      }),
+    
+    updateMyTemplate: protectedProcedure
+      .input(z.object({
+        id: z.string(),
+        name: z.string().optional(),
+        description: z.string().optional(),
+        isPublic: z.boolean().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { updateUserTemplate } = await import("./db-automation-templates");
+        const { id, ...data } = input;
+        await updateUserTemplate(id, data);
+        return { success: true };
+      }),
+    
+    deleteMyTemplate: protectedProcedure
+      .input(z.object({ id: z.string() }))
+      .mutation(async ({ input }) => {
+        const { deleteUserTemplate } = await import("./db-automation-templates");
+        await deleteUserTemplate(input.id);
+        return { success: true };
       }),
   }),
   

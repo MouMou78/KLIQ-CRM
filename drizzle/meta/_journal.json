@@ -232,6 +232,13 @@
       "when": 1770289662602,
       "tag": "0032_black_impossible_man",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "5",
+      "when": 1770293194428,
+      "tag": "0033_organic_proudstar",
+      "breakpoints": true
     }
   ]
 }
