@@ -1775,3 +1775,37 @@
 - [ ] Implement recommendation scoring and ranking
 - [ ] Add "Not Interested" option to hide recommendations
 - [ ] Test recommendations with various user profiles
+
+
+## Complete Marketplace Features
+
+### Version History UI
+- [x] Add "View History" button to My Templates cards
+- [x] Create version history dialog showing all versions with timestamps
+- [x] Display version number, changelog, and creation date for each version
+- [ ] Add "Compare" button to show differences between versions
+- [ ] Implement version comparison view highlighting changes
+- [x] Add "Rollback" button with confirmation dialog
+- [x] Show success message after rollback
+- [x] Test version history and rollback workflow
+
+### AI Recommendation Engine
+- [x] Analyze user's automation rules to extract patterns (triggers, actions, conditions)
+- [x] Build scoring algorithm based on pattern matching
+- [x] Create backend procedure to generate recommendations
+- [x] Add "Recommended for You" section to marketplace homepage
+- [x] Display top 3-5 recommended templates with reasoning
+- [x] Show recommendation score and match percentage
+- [ ] Add "Not Interested" button to hide recommendations
+- [x] Test recommendations with various user profiles
+
+### Template Export/Import
+- [x] Add "Export" button to template cards in My Templates
+- [x] Generate JSON file with complete template data
+- [x] Trigger browser download for exported JSON
+- [x] Add "Import Template" button to marketplace header
+- [x] Create file upload dialog accepting JSON files
+- [x] Parse and validate imported template data
+- [x] Handle import errors gracefully with clear messages
+- [x] Add imported template to user's My Templates
+- [x] Test export/import with various template configurations

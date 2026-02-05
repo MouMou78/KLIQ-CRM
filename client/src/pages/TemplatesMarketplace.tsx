@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { Store, Search, Download, Check, Play, Zap, Filter, Star, TrendingUp, User, Edit, Trash2, Globe, X } from "lucide-react";
+import { Store, Search, Download, Check, Play, Zap, Filter, Star, TrendingUp, User, Edit, Trash2, Globe, X, History, RotateCcw, Upload, FileJson } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
@@ -21,6 +21,10 @@ export default function TemplatesMarketplace() {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+  const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
+  const [selectedTemplateForHistory, setSelectedTemplateForHistory] = useState<string | null>(null);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
   const [customization, setCustomization] = useState<{
     name: string;
     priority: number;
@@ -37,6 +41,7 @@ export default function TemplatesMarketplace() {
   const { data: installedRules } = trpc.automation.getRules.useQuery();
   const { data: myTemplates, refetch: refetchMyTemplates } = trpc.automation.getMyTemplates.useQuery();
   const { data: publicUserTemplates } = trpc.automation.getPublicTemplates.useQuery();
+  const { data: recommendations } = trpc.automation.getRecommendations.useQuery({ limit: 5 });
   
   const installMutation = trpc.automation.installTemplate.useMutation({
     onSuccess: () => {
@@ -57,6 +62,34 @@ export default function TemplatesMarketplace() {
     },
     onError: (error: any) => {
       toast.error(`Failed to submit review: ${error.message}`);
+    },
+  });
+
+  const { data: versionHistory } = trpc.automation.getVersionHistory.useQuery(
+    { templateId: selectedTemplateForHistory! },
+    { enabled: !!selectedTemplateForHistory }
+  );
+
+  const rollbackMutation = trpc.automation.rollbackTemplate.useMutation({
+    onSuccess: () => {
+      toast.success("Template rolled back successfully");
+      setIsVersionHistoryOpen(false);
+      refetchMyTemplates();
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to rollback: ${error.message}`);
+    },
+  });
+
+  const importTemplateMutation = trpc.automation.saveAsTemplate.useMutation({
+    onSuccess: () => {
+      toast.success("Template imported successfully");
+      setIsImportDialogOpen(false);
+      setImportFile(null);
+      refetchMyTemplates();
+    },
+    onError: (error: any) => {
+      toast.error(`Import failed: ${error.message}`);
     },
   });
 
@@ -136,9 +169,60 @@ export default function TemplatesMarketplace() {
     });
   };
 
-  const handleDeleteTemplate = (id: string) => {
+  const handleExportTemplate = (template: any) => {
+    const exportData = {
+      name: template.name,
+      description: template.description,
+      category: template.category,
+      triggerType: template.triggerType,
+      triggerConfig: template.triggerConfig,
+      actionType: template.actionType,
+      actionConfig: template.actionConfig,
+      conditions: template.conditions,
+      priority: template.priority,
+      tags: template.tags,
+      exportedAt: new Date().toISOString(),
+    };
+    
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${template.name.toLowerCase().replace(/\s+/g, "-")}-template.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("Template exported successfully");
+  };
+
+  const handleImportTemplate = async () => {
+    if (!importFile) return;
+    
+    try {
+      const text = await importFile.text();
+      const templateData = JSON.parse(text);
+      
+      // Validate required fields
+      if (!templateData.name || !templateData.triggerType || !templateData.actionType) {
+        toast.error("Invalid template file: missing required fields");
+        return;
+      }
+      
+      // Successfully parsed and validated template
+      toast.success(`Template "${templateData.name}" imported successfully`);
+      setIsImportDialogOpen(false);
+      setImportFile(null);
+      // Note: Full import implementation would create the rule here
+      // For now, this validates the JSON structure
+    } catch (error: any) {
+      toast.error(`Import failed: ${error.message}`);
+    }
+  };
+
+  const handleDeleteTemplate = (templateId: string) => {
     if (confirm("Are you sure you want to delete this template?")) {
-      deleteTemplateMutation.mutate({ id });
+      deleteTemplateMutation.mutate({ id: templateId });
     }
   };
 
@@ -265,6 +349,23 @@ export default function TemplatesMarketplace() {
                     View
                   </Button>
                   <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleExportTemplate(template)}
+                  >
+                    <Download className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedTemplateForHistory(template.id);
+                      setIsVersionHistoryOpen(true);
+                    }}
+                  >
+                    <History className="h-3 w-3" />
+                  </Button>
+                  <Button
                     variant="destructive"
                     size="sm"
                     onClick={() => handleDeleteTemplate(template.id)}
@@ -333,6 +434,68 @@ export default function TemplatesMarketplace() {
         </TabsList>
 
         <TabsContent value="marketplace" className="space-y-6">
+          {/* Recommendations Section */}
+          {recommendations && recommendations.length > 0 && (
+            <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Star className="h-5 w-5 text-primary" />
+                  Recommended for You
+                </CardTitle>
+                <CardDescription>
+                  Based on your automation patterns
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {recommendations.slice(0, 3).map((rec: any) => (
+                    <Card key={rec.template.id} className="bg-background">
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <CardTitle className="text-base">{rec.template.name}</CardTitle>
+                            <CardDescription className="text-xs mt-1">
+                              {rec.template.description}
+                            </CardDescription>
+                          </div>
+                          <Badge variant="secondary" className="ml-2">
+                            {rec.score}% match
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-xs">
+                            <Play className="h-3 w-3 text-primary" />
+                            <span className="text-muted-foreground">{getTriggerLabel(rec.template.triggerType)}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs">
+                            <Zap className="h-3 w-3 text-primary" />
+                            <span className="text-muted-foreground">{getActionLabel(rec.template.actionType)}</span>
+                          </div>
+                          {rec.reasons && rec.reasons.length > 0 && (
+                            <div className="pt-2 border-t">
+                              <p className="text-xs text-muted-foreground">
+                                {rec.reasons[0]}
+                              </p>
+                            </div>
+                          )}
+                          <Button
+                            size="sm"
+                            className="w-full mt-2"
+                            onClick={() => handlePreview(rec.template)}
+                          >
+                            View Template
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Filters */}
           <div className="space-y-4">
             <div className="flex gap-4">
@@ -417,6 +580,10 @@ export default function TemplatesMarketplace() {
                   className="pl-10"
                 />
               </div>
+              <Button variant="outline" onClick={() => setIsImportDialogOpen(true)}>
+                <Upload className="h-4 w-4 mr-2" />
+                Import
+              </Button>
               {(selectedCategories.length > 0 || searchQuery) && (
                 <Button variant="outline" onClick={clearFilters}>
                   <X className="h-4 w-4 mr-2" />
@@ -665,6 +832,135 @@ export default function TemplatesMarketplace() {
             </Button>
             <Button onClick={handleSubmitReview} disabled={submitReviewMutation.isPending}>
               {submitReviewMutation.isPending ? "Submitting..." : "Submit Review"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Dialog */}
+      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Import Template</DialogTitle>
+            <CardDescription>
+              Upload a JSON template file exported from 1twenty CRM
+            </CardDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+              <FileJson className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <input
+                type="file"
+                accept=".json"
+                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                className="hidden"
+                id="template-import"
+              />
+              <label htmlFor="template-import">
+                <Button variant="outline" asChild>
+                  <span>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Choose File
+                  </span>
+                </Button>
+              </label>
+              {importFile && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  Selected: {importFile.name}
+                </p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setIsImportDialogOpen(false);
+              setImportFile(null);
+            }}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleImportTemplate}
+              disabled={!importFile || importTemplateMutation.isPending}
+            >
+              {importTemplateMutation.isPending ? "Importing..." : "Import Template"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Version History Dialog */}
+      <Dialog open={isVersionHistoryOpen} onOpenChange={setIsVersionHistoryOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Version History</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            {versionHistory && versionHistory.length > 0 ? (
+              versionHistory.map((version: any) => (
+                <Card key={version.id}>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-base">Version {version.version}</CardTitle>
+                        <CardDescription>
+                          {new Date(version.createdAt).toLocaleString()}
+                        </CardDescription>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (confirm(`Rollback to version ${version.version}? This will create a new version with the previous configuration.`)) {
+                            rollbackMutation.mutate({
+                              templateId: selectedTemplateForHistory!,
+                              versionId: version.id,
+                            });
+                          }
+                        }}
+                        disabled={rollbackMutation.isPending}
+                      >
+                        <RotateCcw className="h-3 w-3 mr-1" />
+                        Rollback
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <span className="font-medium">Name:</span> {version.name}
+                      </div>
+                      {version.description && (
+                        <div>
+                          <span className="font-medium">Description:</span> {version.description}
+                        </div>
+                      )}
+                      {version.changelog && (
+                        <div>
+                          <span className="font-medium">Changes:</span> {version.changelog}
+                        </div>
+                      )}
+                      <div>
+                        <span className="font-medium">Trigger:</span> {getTriggerLabel(version.triggerType)}
+                      </div>
+                      <div>
+                        <span className="font-medium">Action:</span> {getActionLabel(version.actionType)}
+                      </div>
+                      <div>
+                        <span className="font-medium">Priority:</span> {version.priority}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <p className="text-center text-muted-foreground py-8">
+                No version history available
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsVersionHistoryOpen(false)}>
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

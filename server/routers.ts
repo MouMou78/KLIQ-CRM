@@ -2657,6 +2657,31 @@ Generate a subject line and email body. Format your response as JSON with "subje
         await deleteUserTemplate(input.id);
         return { success: true };
       }),
+    
+    getVersionHistory: protectedProcedure
+      .input(z.object({ templateId: z.string() }))
+      .query(async ({ input }) => {
+        const { getTemplateVersionHistory } = await import("./db-automation-templates");
+        return getTemplateVersionHistory(input.templateId);
+      }),
+    
+    rollbackTemplate: protectedProcedure
+      .input(z.object({
+        templateId: z.string(),
+        versionId: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const { rollbackTemplateToVersion } = await import("./db-automation-templates");
+        await rollbackTemplateToVersion(input.templateId, input.versionId);
+        return { success: true };
+      }),
+    
+    getRecommendations: protectedProcedure
+      .input(z.object({ limit: z.number().optional() }))
+      .query(async ({ ctx, input }) => {
+        const { getRecommendations } = await import("./recommendation-engine");
+        return getRecommendations(ctx.user.id, ctx.user.tenantId, input.limit || 5);
+      }),
   }),
   
   collaboration: router({
