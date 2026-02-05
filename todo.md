@@ -1436,3 +1436,32 @@
 - [ ] Create saved reports feature
 - [ ] Add scheduled report generation and email delivery
 - [ ] Test report generation with complex filters
+
+## AI Email Assistant Integration
+- [x] Find email composition pages in the CRM
+- [x] Integrate AIEmailAssistant component into Campaigns page
+- [x] Integrate AIEmailAssistant component into SequenceBuilder page
+- [x] Add email subject and body state management
+- [x] Test AI email generation from different pages
+- [x] Ensure AI context includes relevant CRM data
+
+## Best Practice Email Learning System
+- [x] Create emailExamples table in database schema
+- [x] Add fields: subject, body, category, performanceMetrics, userId, createdAt
+- [x] Generate and apply database migration
+- [x] Backend API endpoints exist (stub implementation in emailGenerator router)
+- [x] Email examples management page exists (EmailGenerator.tsx)
+- [ ] Update backend to actually store/retrieve from database
+- [ ] Update AI email generation to include user's best practice examples
+- [ ] Test learning system with sample emails
+
+## Task Reminders & Notifications
+- [ ] Check existing tasks table schema for reminder fields
+- [ ] Add reminderAt and reminderSent fields if needed
+- [ ] Create background job to check for upcoming task reminders
+- [ ] Implement desktop notification API integration
+- [ ] Implement email notification for task reminders
+- [ ] Add reminder time selector to task creation UI
+- [ ] Add notification preferences to user settings
+- [ ] Test task reminders with various time intervals
+- [ ] Test notification delivery (desktop and email)

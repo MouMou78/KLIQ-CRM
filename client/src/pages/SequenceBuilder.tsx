@@ -9,6 +9,7 @@ import { Plus, Mail, Clock, GitBranch, Trash2, GripVertical, Save } from "lucide
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+import { AIEmailAssistant } from "@/components/AIEmailAssistant";
 
 interface SequenceStep {
   id: string;
@@ -178,7 +179,16 @@ export default function SequenceBuilder() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Email Body</Label>
+                      <div className="flex items-center justify-between">
+                        <Label>Email Body</Label>
+                        <AIEmailAssistant
+                          currentSubject={step.subject || ""}
+                          currentBody={step.body || ""}
+                          onApply={(newSubject: string, newBody: string) => {
+                            updateStep(step.id, { subject: newSubject, body: newBody });
+                          }}
+                        />
+                      </div>
                       <Textarea
                         placeholder="Write your email content..."
                         value={step.body || ""}

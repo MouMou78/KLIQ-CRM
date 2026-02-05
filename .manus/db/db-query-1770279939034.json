@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `emailExamples` (\n\t`id` varchar(36) NOT NULL,\n\t`userId` varchar(36) NOT NULL,\n\t`subject` varchar(500) NOT NULL,\n\t`body` text NOT NULL,\n\t`context` text,\n\t`category` varchar(100),\n\t`performanceMetrics` json,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `emailExamples_id` PRIMARY KEY(`id`)\n);\nCREATE INDEX `email_examples_user_idx` ON `emailExamples` (`userId`);\nCREATE INDEX `email_examples_category_idx` ON `emailExamples` (`category`);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2QkRhwd4AVTLhHG.a0950ca1ba2f --database TQEsx2HByTQrcAiUBn2kww --execute CREATE TABLE `emailExamples` (\n\t`id` varchar(36) NOT NULL,\n\t`userId` varchar(36) NOT NULL,\n\t`subject` varchar(500) NOT NULL,\n\t`body` text NOT NULL,\n\t`context` text,\n\t`category` varchar(100),\n\t`performanceMetrics` json,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `emailExamples_id` PRIMARY KEY(`id`)\n);\nCREATE INDEX `email_examples_user_idx` ON `emailExamples` (`userId`);\nCREATE INDEX `email_examples_category_idx` ON `emailExamples` (`category`);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 3895
+}

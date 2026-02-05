@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Mail, Plus, Send, Calendar, Users, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { AIEmailAssistant } from "@/components/AIEmailAssistant";
 
 export default function Campaigns() {
   const [open, setOpen] = useState(false);
@@ -108,7 +109,17 @@ export default function Campaigns() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="body">Email Body</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="body">Email Body</Label>
+                      <AIEmailAssistant
+                        currentSubject={subject}
+                        currentBody={body}
+                        onApply={(newSubject: string, newBody: string) => {
+                          setSubject(newSubject);
+                          setBody(newBody);
+                        }}
+                      />
+                    </div>
                     <Textarea
                       id="body"
                       placeholder="Write your email content here..."

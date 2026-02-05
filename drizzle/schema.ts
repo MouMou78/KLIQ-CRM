@@ -978,3 +978,20 @@ export const documentFolders = mysqlTable("documentFolders", {
 
 export type DocumentFolder = typeof documentFolders.$inferSelect;
 export type InsertDocumentFolder = typeof documentFolders.$inferInsert;
+
+// Email Examples for AI Learning
+export const emailExamples = mysqlTable("emailExamples", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("userId", { length: 36 }).notNull(),
+  subject: varchar("subject", { length: 500 }).notNull(),
+  body: text("body").notNull(),
+  context: text("context"), // What situation this email was for
+  category: varchar("category", { length: 100 }), // e.g., "cold_outreach", "follow_up", "introduction"
+  performanceMetrics: json("performanceMetrics"), // e.g., { openRate: 0.8, replyRate: 0.3 }
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  userIdx: index("email_examples_user_idx").on(table.userId),
+  categoryIdx: index("email_examples_category_idx").on(table.category),
+}));
+export type EmailExample = typeof emailExamples.$inferSelect;
+export type InsertEmailExample = typeof emailExamples.$inferInsert;
