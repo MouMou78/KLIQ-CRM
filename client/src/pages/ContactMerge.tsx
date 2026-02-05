@@ -67,7 +67,7 @@ export default function ContactMerge() {
   return (
     <div className="container max-w-6xl py-8">
       <div className="mb-6">
-        <Button variant="ghost" onClick={() => setLocation("/people")}>
+        <Button variant="ghost" size="sm" onClick={() => setLocation("/people")}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Contacts
         </Button>

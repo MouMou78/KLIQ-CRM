@@ -52,9 +52,9 @@ export default function Dashboard() {
                   <div key={task.id} className="text-sm">
                     <p className="font-medium truncate">{task.title}</p>
                     <p className="text-xs text-muted-foreground">
-                      {task.priority === "high" && "🔴 "}
-                      {task.priority === "medium" && "🟡 "}
-                      {task.priority === "low" && "🟢 "}
+                      {task.priority === "high" && "High priority • "}
+                      {task.priority === "medium" && "Medium priority • "}
+                      {task.priority === "low" && "Low priority • "}
                       {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "No due date"}
                     </p>
                   </div>

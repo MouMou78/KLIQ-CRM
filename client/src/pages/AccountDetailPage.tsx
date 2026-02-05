@@ -110,7 +110,7 @@ export default function AccountDetailPage() {
         <div className="text-center">
           <h2 className="text-2xl font-semibold mb-2">Account not found</h2>
           <Link href="/accounts">
-            <Button variant="outline">
+            <Button variant="ghost">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Accounts
             </Button>
@@ -126,8 +126,9 @@ export default function AccountDetailPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/accounts">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-4 w-4" />
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Accounts
             </Button>
           </Link>
           <div>
@@ -298,9 +299,9 @@ export default function AccountDetailPage() {
                             <EditableRoleBadge personId={contact.id} role={contact.buyingRole as BuyingRole} />
                             {activitySummaries[contact.id] && activitySummaries[contact.id].totalActivities > 0 && (
                               <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                                {activitySummaries[contact.id].emailCount > 0 && `📧 ${activitySummaries[contact.id].emailCount}`}
-                                {activitySummaries[contact.id].meetingCount > 0 && ` 📅 ${activitySummaries[contact.id].meetingCount}`}
-                                {activitySummaries[contact.id].callCount > 0 && ` 📞 ${activitySummaries[contact.id].callCount}`}
+                                {activitySummaries[contact.id].emailCount > 0 && `${activitySummaries[contact.id].emailCount} emails`}
+                                {activitySummaries[contact.id].meetingCount > 0 && ` • ${activitySummaries[contact.id].meetingCount} meetings`}
+                                {activitySummaries[contact.id].callCount > 0 && ` • ${activitySummaries[contact.id].callCount} calls`}
                               </span>
                             )}
                           </div>

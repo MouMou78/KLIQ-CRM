@@ -24,12 +24,13 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { Home, LogOut, PanelLeft, Users, Calendar, Settings, BarChart3, TrendingUp, Sparkles, Building2, UserCircle, Zap, Mail, Sliders, Activity, Wand2, ChevronDown, Target, Send, LineChart, MessageSquare, Bell, Workflow, History, Store } from "lucide-react";
+import { Home, LogOut, PanelLeft, Users, Calendar, Settings, BarChart3, TrendingUp, Sparkles, Building2, UserCircle, Zap, Mail, Sliders, Activity, Wand2, ChevronDown, Target, Send, LineChart, MessageSquare, Bell, Workflow, History, Store, Moon, Sun } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 import { NotificationBell } from './NotificationBell';
+import { useTheme } from "./theme-provider";
 
 const menuItems = [
   { icon: Home, label: "Home", path: "/" },
@@ -140,6 +141,32 @@ export default function DashboardLayout({
         {children}
       </DashboardLayoutContent>
     </SidebarProvider>
+  );
+}
+
+function ThemeToggle() {
+  const { theme, setTheme } = useTheme();
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={() => {
+        if (theme === "light") {
+          setTheme("dark");
+        } else if (theme === "dark") {
+          setTheme("system");
+        } else {
+          setTheme("light");
+        }
+      }}
+      className="h-9 w-9"
+    >
+      {theme === "light" && <Sun className="h-4 w-4" />}
+      {theme === "dark" && <Moon className="h-4 w-4" />}
+      {theme === "system" && <Settings className="h-4 w-4" />}
+      <span className="sr-only">Toggle theme</span>
+    </Button>
   );
 }
 
@@ -412,13 +439,19 @@ function DashboardLayoutContent({
                 </div>
               </div>
             </div>
-            <NotificationBell />
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <NotificationBell />
+            </div>
           </div>
         )}
         {/* Desktop header */}
         {!isMobile && (
           <div className="flex border-b h-14 items-center justify-end bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
-            <NotificationBell />
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <NotificationBell />
+            </div>
           </div>
         )}
         <main className="flex-1 p-4">{children}</main>

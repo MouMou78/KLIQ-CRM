@@ -44,7 +44,7 @@ export default function AccountDetail() {
           <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-xl font-semibold mb-2">Account Not Found</h2>
           <p className="text-muted-foreground mb-4">The account you're looking for doesn't exist.</p>
-          <Button onClick={() => navigate("/amplemarket/accounts")}>
+          <Button variant="ghost" onClick={() => navigate("/amplemarket/accounts")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Accounts
           </Button>

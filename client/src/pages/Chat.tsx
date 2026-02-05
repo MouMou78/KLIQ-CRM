@@ -559,7 +559,6 @@ export default function Chat() {
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-2 px-3 py-2 bg-accent rounded-md text-sm hover:bg-accent/80"
                               >
-                                <span>📎</span>
                                 <span>{message.fileName || "Download file"}</span>
                                 {message.fileSize && (
                                   <span className="text-muted-foreground">({(message.fileSize / 1024).toFixed(1)} KB)</span>
@@ -643,7 +642,7 @@ export default function Chat() {
               {selectedFile && (
                 <div className="mb-2 p-2 bg-accent/30 rounded-md flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="text-muted-foreground">📎 {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)</span>
+                    <span className="text-muted-foreground">{selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)</span>
                   </div>
                   <Button
                     variant="ghost"

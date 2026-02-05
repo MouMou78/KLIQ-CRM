@@ -35,7 +35,7 @@ export default function DealDetail() {
       <div className="container py-8">
         <div className="text-center py-12">
           <h2 className="text-2xl font-bold mb-4">Deal Not Found</h2>
-          <Button onClick={() => setLocation("/deals")}>
+          <Button variant="ghost" size="sm" onClick={() => setLocation("/deals")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Pipeline
           </Button>
@@ -48,7 +48,7 @@ export default function DealDetail() {
     <div className="container max-w-5xl py-8">
       {/* Header */}
       <div className="mb-6">
-        <Button variant="ghost" onClick={() => setLocation("/deals")}>
+        <Button variant="ghost" size="sm" onClick={() => setLocation("/deals")}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Pipeline
         </Button>
