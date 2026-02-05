@@ -1859,3 +1859,10 @@
 - [x] Add light/dark theme toggle to UI (system default)
 - [x] Configure SMTP settings for email functionality (users connect their own email accounts)
 - [x] Test mobile responsiveness (320px-768px viewports)
+
+## Navigation Fix (Critical)
+- [x] Audit all detail/subpages for missing back buttons
+- [x] Add back buttons to PersonDetail page
+- [x] Add back buttons to EventDetail page
+- [x] Add back buttons to ThreadDetail page
+- [x] Test all navigation flows to ensure users can always return to list views

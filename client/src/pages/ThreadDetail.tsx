@@ -3,9 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Send, Mail, Phone, Calendar, MessageSquare, UserPlus, CheckCircle2 } from "lucide-react";
+import { Loader2, Send, Mail, Phone, Calendar, MessageSquare, UserPlus, CheckCircle2, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { format } from "date-fns";
+import { useLocation, Link } from "wouter";
 
 interface ThreadDetailProps {
   threadId: string;
@@ -23,6 +24,7 @@ const momentIcons: Record<string, any> = {
 };
 
 export default function ThreadDetail({ threadId }: ThreadDetailProps) {
+  const [, setLocation] = useLocation();
   const { data, isLoading } = trpc.threads.get.useQuery({ id: threadId });
   const [note, setNote] = useState("");
   
@@ -58,6 +60,12 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
 
   return (
     <div className="space-y-6">
+      <div className="mb-4">
+        <Button variant="ghost" size="sm" onClick={() => setLocation(`/people/${thread.personId}`)}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Contact
+        </Button>
+      </div>
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">

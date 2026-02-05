@@ -1,15 +1,17 @@
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Calendar, ExternalLink, Copy } from "lucide-react";
+import { Loader2, Calendar, ExternalLink, Copy, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { useLocation } from "wouter";
 
 interface EventDetailProps {
   eventId: string;
 }
 
 export default function EventDetail({ eventId }: EventDetailProps) {
+  const [, setLocation] = useLocation();
   const { data: event, isLoading } = trpc.events.get.useQuery({ id: eventId });
 
   if (isLoading) {
@@ -33,6 +35,12 @@ export default function EventDetail({ eventId }: EventDetailProps) {
 
   return (
     <div className="space-y-6">
+      <div className="mb-4">
+        <Button variant="ghost" size="sm" onClick={() => setLocation("/events")}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Events
+        </Button>
+      </div>
       <div>
         <h1 className="text-3xl font-bold tracking-tight">{event.name}</h1>
         {event.startsAt && (

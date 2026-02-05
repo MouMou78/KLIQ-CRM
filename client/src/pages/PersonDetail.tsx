@@ -2,10 +2,10 @@ import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Mail, Phone, Building, Briefcase, Plus, MapPin, ExternalLink, TrendingUp, CheckCircle2, Target, Flame, Sparkles } from "lucide-react";
+import { Loader2, Mail, Phone, Building, Briefcase, Plus, MapPin, ExternalLink, TrendingUp, CheckCircle2, Target, Flame, Sparkles, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { Streamdown } from "streamdown";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { EmailActivityTimeline } from "@/components/EmailActivityTimeline";
 import Notes from "@/components/Notes";
 import { AIEmailAssistant } from "@/components/AIEmailAssistant";
@@ -20,6 +20,7 @@ interface PersonDetailProps {
 }
 
 export default function PersonDetail({ personId }: PersonDetailProps) {
+  const [, setLocation] = useLocation();
   const { data, isLoading } = trpc.people.get.useQuery({ id: personId });
   const [insights, setInsights] = useState<{ insights: string; generatedAt: string } | null>(null);
   const [showInsights, setShowInsights] = useState(false);
@@ -47,6 +48,13 @@ export default function PersonDetail({ personId }: PersonDetailProps) {
 
   return (
     <div className="space-y-4 md:space-y-6">
+      {/* Back button */}
+      <div className="mb-4">
+        <Button variant="ghost" size="sm" onClick={() => setLocation("/people")}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to People
+        </Button>
+      </div>
       {/* Mobile-optimized header */}
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div className="flex items-start gap-3 md:gap-4">
