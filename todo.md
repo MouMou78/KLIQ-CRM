@@ -2005,3 +2005,4 @@
 
 ## Bug Fixes
 - [x] Fix custom_auth_session cookie reading error in authentication system
+- [x] Install and configure cookie-parser middleware for Express server
