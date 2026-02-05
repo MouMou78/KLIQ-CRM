@@ -1661,3 +1661,15 @@
 - [x] Integrate condition builder into rule creation dialog
 - [x] Update rule display to show conditions in readable format
 - [x] Test complex multi-condition rules
+
+
+## Automation Rule Enhancements
+- [x] Create condition template library with pre-built sets (High-value leads, Stalled deals, Hot prospects)
+- [x] Add "Apply Template" button in ConditionBuilder to load pre-configured conditions
+- [x] Add priority field to automationRules schema (integer, default 0)
+- [x] Implement priority ordering in rule execution and display
+- [x] Add drag-and-drop reordering UI for rule priority
+- [x] Build conflict detection algorithm to identify conflicting rules
+- [x] Show warnings when creating rules that might conflict or loop
+- [x] Add conflict resolution suggestions in validation messages
+- [x] Test all three enhancements together

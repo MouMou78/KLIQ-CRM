@@ -368,6 +368,7 @@ export const automationRules = mysqlTable("automationRules", {
       value: any;
     }>;
   }>().default({ logic: 'AND', rules: [] }),
+  priority: int("priority").default(0).notNull(),
   status: mysqlEnum("status", ["active", "paused"]).default("active").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

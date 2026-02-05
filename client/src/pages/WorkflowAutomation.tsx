@@ -21,6 +21,7 @@ export default function WorkflowAutomation() {
     actionType: "move_stage" | "send_notification" | "create_task" | "enroll_sequence" | "update_field";
     actionConfig: Record<string, any>;
     conditions: ConditionGroup;
+    priority: number;
   }>({
     name: "",
     description: "",
@@ -29,6 +30,7 @@ export default function WorkflowAutomation() {
     actionType: "move_stage",
     actionConfig: {},
     conditions: { logic: 'AND', rules: [] },
+    priority: 0,
   });
 
   const { data: rules, isLoading, refetch } = trpc.automation.getRules.useQuery();
@@ -49,6 +51,7 @@ export default function WorkflowAutomation() {
         actionType: "move_stage",
         actionConfig: {},
         conditions: { logic: 'AND', rules: [] },
+        priority: 0,
       });
       toast.success("Automation rule created");
     },
@@ -125,7 +128,51 @@ export default function WorkflowAutomation() {
     }, 1500);
   };
 
+  const detectConflicts = () => {
+    if (!rules) return [];
+    
+    const conflicts: string[] = [];
+    const existingRules = rules.filter((r: any) => r.status === 'active');
+    
+    // Check for opposite actions on same trigger
+    for (const existing of existingRules) {
+      if (existing.triggerType === formData.triggerType) {
+        // Check for stage move conflicts
+        if (formData.actionType === 'move_stage' && existing.actionType === 'move_stage') {
+          const newStage = formData.actionConfig.toStage;
+          const existingStage = existing.actionConfig?.toStage;
+          if (newStage && existingStage && newStage !== existingStage) {
+            conflicts.push(`Conflict with "${existing.name}": Both rules trigger on ${getTriggerLabel(formData.triggerType)} but move to different stages (${newStage} vs ${existingStage}). Consider using priority or conditions to differentiate.`);
+          }
+        }
+        
+        // Check for potential loops
+        if (formData.triggerType === 'stage_entered' && existing.triggerType === 'stage_entered') {
+          const newFrom = formData.triggerConfig.fromStage;
+          const newTo = formData.actionConfig.toStage;
+          const existingFrom = existing.triggerConfig?.fromStage;
+          const existingTo = existing.actionConfig?.toStage;
+          
+          if (newFrom === existingTo && newTo === existingFrom) {
+            conflicts.push(`Potential loop detected with "${existing.name}": Rule moves from ${newFrom} to ${newTo}, while existing rule moves from ${existingFrom} to ${existingTo}. This could create an infinite loop.`);
+          }
+        }
+      }
+    }
+    
+    return conflicts;
+  };
+
   const handleCreate = () => {
+    const conflicts = detectConflicts();
+    
+    if (conflicts.length > 0) {
+      const proceed = confirm(
+        `Warning: Potential conflicts detected:\n\n${conflicts.join('\n\n')}\n\nDo you want to create this rule anyway?`
+      );
+      if (!proceed) return;
+    }
+    
     createMutation.mutate(formData);
   };
 
@@ -205,6 +252,18 @@ export default function WorkflowAutomation() {
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Brief description of what this rule does"
                 />
+              </div>
+
+              <div>
+                <Label htmlFor="priority">Priority</Label>
+                <Input
+                  id="priority"
+                  type="number"
+                  value={formData.priority}
+                  onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 0 })}
+                  placeholder="0"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Higher priority rules execute first</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -418,12 +477,20 @@ export default function WorkflowAutomation() {
           ) : (
             rules
               ?.filter((r: any) => r.status === "active")
+              .sort((a: any, b: any) => (b.priority || 0) - (a.priority || 0))
               .map((rule: any) => (
                 <Card key={rule.id}>
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <CardTitle className="text-lg">{rule.name}</CardTitle>
+                        <div className="flex items-center gap-2">
+                          <CardTitle className="text-lg">{rule.name}</CardTitle>
+                          {rule.priority > 0 && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                              Priority {rule.priority}
+                            </span>
+                          )}
+                        </div>
                         {rule.description && (
                           <CardDescription className="mt-1">{rule.description}</CardDescription>
                         )}
@@ -494,7 +561,14 @@ export default function WorkflowAutomation() {
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <CardTitle className="text-lg">{rule.name}</CardTitle>
+                        <div className="flex items-center gap-2">
+                          <CardTitle className="text-lg">{rule.name}</CardTitle>
+                          {rule.priority > 0 && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                              Priority {rule.priority}
+                            </span>
+                          )}
+                        </div>
                         {rule.description && (
                           <CardDescription className="mt-1">{rule.description}</CardDescription>
                         )}

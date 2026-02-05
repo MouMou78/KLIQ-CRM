@@ -2429,6 +2429,7 @@ Generate a subject line and email body. Format your response as JSON with "subje
             value: z.any(),
           })),
         }).optional(),
+        priority: z.number().optional(),
         status: z.enum(["active", "paused"]).optional(),
       }))
       .mutation(async ({ input, ctx }) => {

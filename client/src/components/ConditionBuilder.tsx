@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Filter } from "lucide-react";
+import { Plus, Trash2, Filter, BookTemplate } from "lucide-react";
 
 export type Condition = {
   field: string;
@@ -21,6 +21,43 @@ interface ConditionBuilderProps {
   value: ConditionGroup;
   onChange: (value: ConditionGroup) => void;
 }
+
+const CONDITION_TEMPLATES = [
+  {
+    name: 'High-Value Qualified Leads',
+    description: 'Contacts with high scores and significant deal values',
+    conditions: {
+      logic: 'AND' as const,
+      rules: [
+        { field: 'contact.score', operator: 'greater_than' as const, value: '80' },
+        { field: 'deal.value', operator: 'greater_than' as const, value: '50000' },
+      ],
+    },
+  },
+  {
+    name: 'Stalled Deals',
+    description: 'Deals with no recent activity',
+    conditions: {
+      logic: 'AND' as const,
+      rules: [
+        { field: 'activity.count', operator: 'equals' as const, value: '0' },
+        { field: 'deal.stage', operator: 'not_equals' as const, value: 'closed' },
+      ],
+    },
+  },
+  {
+    name: 'Hot Prospects',
+    description: 'Engaged contacts with email interactions',
+    conditions: {
+      logic: 'AND' as const,
+      rules: [
+        { field: 'email.opened', operator: 'equals' as const, value: 'true' },
+        { field: 'email.replied', operator: 'equals' as const, value: 'true' },
+        { field: 'contact.score', operator: 'greater_than' as const, value: '70' },
+      ],
+    },
+  },
+];
 
 const FIELD_OPTIONS = [
   { value: 'deal.value', label: 'Deal Value' },
@@ -46,6 +83,13 @@ const OPERATOR_OPTIONS = [
 ];
 
 export function ConditionBuilder({ value, onChange }: ConditionBuilderProps) {
+  const [showTemplates, setShowTemplates] = useState(false);
+
+  const applyTemplate = (template: typeof CONDITION_TEMPLATES[0]) => {
+    onChange(template.conditions);
+    setShowTemplates(false);
+  };
+
   const addCondition = () => {
     onChange({
       ...value,
@@ -90,17 +134,55 @@ export function ConditionBuilder({ value, onChange }: ConditionBuilderProps) {
           <Filter className="h-4 w-4" />
           Conditions
         </Label>
-        {value.rules.length > 1 && (
+        <div className="flex gap-2">
           <Button
             type="button"
             variant="outline"
             size="sm"
-            onClick={toggleLogic}
+            onClick={() => setShowTemplates(!showTemplates)}
           >
-            Logic: {value.logic}
+            <BookTemplate className="h-3 w-3 mr-1" />
+            Templates
           </Button>
-        )}
+          {value.rules.length > 1 && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={toggleLogic}
+            >
+              Logic: {value.logic}
+            </Button>
+          )}
+        </div>
       </div>
+
+      {/* Condition Templates */}
+      {showTemplates && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="pt-4">
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Apply Template</p>
+              <div className="grid gap-2">
+                {CONDITION_TEMPLATES.map((template, index) => (
+                  <Button
+                    key={index}
+                    type="button"
+                    variant="outline"
+                    className="justify-start h-auto py-2 px-3"
+                    onClick={() => applyTemplate(template)}
+                  >
+                    <div className="text-left">
+                      <div className="font-medium text-sm">{template.name}</div>
+                      <div className="text-xs text-muted-foreground">{template.description}</div>
+                    </div>
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="space-y-3">
         {value.rules.length === 0 ? (
