@@ -1229,3 +1229,51 @@
 - [x] Display relative time (e.g., "3 days ago") below contact name
 - [x] Handle cases with no contact history
 - [x] Format dates consistently across the app
+
+## New Features - Contact Search, Engagement, Notes, Duplicates, Permissions, Welcome
+
+### Contact Search Bar
+- [x] Add search input above contacts list on Account Detail page
+- [x] Implement search filtering by name, email, and title
+- [x] Add search icon and clear button
+- [ ] Show "No results" message when search returns empty
+- [ ] Test search with various queries
+
+### Engagement Score Indicators
+- [x] Design hot/warm/cold visual indicators
+- [x] Calculate engagement score from lead scoring system
+- [x] Display score indicator next to contact names
+- [x] Add tooltip explaining score meaning
+- [ ] Test score display with different engagement levels
+
+### Contact Note Previews
+- [x] Query most recent note for each contact
+- [x] Display note snippet below contact card (max 100 chars)
+- [x] Add "..." truncation for long notes
+- [x] Handle contacts with no notes gracefully
+- [ ] Test note preview display
+
+### Duplicate Prevention System
+- [ ] Identify all record types (contacts, accounts, deals, etc.)
+- [ ] Implement duplicate detection logic for each type
+- [ ] Create warning dialog explaining why record can't be saved
+- [ ] Add "View existing record" link in warning
+- [ ] Test duplicate prevention across all record types
+
+### Role-Based Permissions
+- [ ] Update user schema with role field (Admin, Manager, Sales, Operations)
+- [ ] Implement permission checking middleware
+- [ ] Restrict delete operations to Admin and Manager roles only
+- [ ] Add permission checks to all delete endpoints
+- [ ] Show/hide delete buttons based on user role
+- [ ] Display permission denied message for unauthorized actions
+- [ ] Test permissions with different user roles
+
+### Welcome/Onboarding Screen
+- [ ] Check if welcome screen already exists
+- [ ] Design welcome screen with CRM introduction
+- [ ] Add user profile setup (name, role, preferences)
+- [ ] Create onboarding checklist or tour
+- [ ] Mark user as onboarded in database
+- [ ] Skip welcome screen for returning users
+- [ ] Test welcome flow for new signups

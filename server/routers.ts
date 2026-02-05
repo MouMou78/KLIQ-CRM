@@ -319,8 +319,33 @@ export const appRouter = router({
         roleTitle: z.string().optional(),
         phone: z.string().optional(),
         tags: z.array(z.string()).optional(),
+        accountId: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
+        const { checkDuplicatePerson } = await import("./duplicate-detection");
+        const nameParts = input.fullName.split(" ");
+        const firstName = nameParts[0] || null;
+        const lastName = nameParts.slice(1).join(" ") || null;
+        
+        const duplicateCheck = await checkDuplicatePerson(
+          ctx.user.tenantId,
+          input.primaryEmail,
+          firstName,
+          lastName,
+          input.accountId || null
+        );
+        
+        if (duplicateCheck.isDuplicate) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: duplicateCheck.reason || "A duplicate contact already exists.",
+            cause: {
+              existingRecordId: duplicateCheck.existingRecordId,
+              existingRecordName: duplicateCheck.existingRecordName,
+            },
+          });
+        }
+        
         return db.createPerson({
           tenantId: ctx.user.tenantId,
           ...input,
@@ -1952,12 +1977,31 @@ Generate a subject line and email body. Format your response as JSON with "subje
     
     create: protectedProcedure
       .input(z.object({
+        name: z.string(),
         subject: z.string(),
         body: z.string(),
         recipientType: z.string(),
         scheduledFor: z.date().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
+        const { checkDuplicateCampaign } = await import("./duplicate-detection");
+        
+        const duplicateCheck = await checkDuplicateCampaign(
+          ctx.user.tenantId,
+          input.name
+        );
+        
+        if (duplicateCheck.isDuplicate) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: duplicateCheck.reason || "A duplicate campaign already exists.",
+            cause: {
+              existingRecordId: duplicateCheck.existingRecordId,
+              existingRecordName: duplicateCheck.existingRecordName,
+            },
+          });
+        }
+        
         const campaign = await db.createCampaign({
           tenantId: ctx.user.tenantId,
           userId: ctx.user.id,
@@ -2142,6 +2186,25 @@ Generate a subject line and email body. Format your response as JSON with "subje
         headquarters: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
+        const { checkDuplicateAccount } = await import("./duplicate-detection");
+        
+        const duplicateCheck = await checkDuplicateAccount(
+          ctx.user.tenantId,
+          input.name,
+          input.domain || null
+        );
+        
+        if (duplicateCheck.isDuplicate) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: duplicateCheck.reason || "A duplicate account already exists.",
+            cause: {
+              existingRecordId: duplicateCheck.existingRecordId,
+              existingRecordName: duplicateCheck.existingRecordName,
+            },
+          });
+        }
+        
         return db.createAccount({
           ...input,
           tenantId: ctx.user.tenantId,
@@ -2163,7 +2226,9 @@ Generate a subject line and email body. Format your response as JSON with "subje
 
     delete: protectedProcedure
       .input(z.object({ id: z.string() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        const { requireDeletePermission } = await import("./permissions");
+        requireDeletePermission(ctx.user.role);
         await db.deleteAccount(input.id);
         return { success: true };
       }),
@@ -2466,7 +2531,9 @@ Generate a subject line and email body. Format your response as JSON with "subje
     
     delete: protectedProcedure
       .input(z.object({ documentId: z.string() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        const { requireDeletePermission } = await import("./permissions");
+        requireDeletePermission(ctx.user.role);
         const { deleteDocument } = await import("./document-manager");
         await deleteDocument(input.documentId);
         return { success: true };
@@ -2733,7 +2800,9 @@ Generate a subject line and email body. Format your response as JSON with "subje
     
     delete: protectedProcedure
       .input(z.object({ id: z.string() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        const { requireDeletePermission } = await import("./permissions");
+        requireDeletePermission(ctx.user.role);
         const { deleteTemplate } = await import("./db-templates");
         await deleteTemplate(input.id);
         return { success: true };
@@ -2847,7 +2916,9 @@ Generate a subject line and email body. Format your response as JSON with "subje
       .input(z.object({
         taskId: z.string(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        const { requireDeletePermission } = await import("./permissions");
+        requireDeletePermission(ctx.user.role);
         const { deleteTask } = await import("./db-tasks");
         await deleteTask(input.taskId);
         return { success: true };
@@ -2943,6 +3014,25 @@ Generate a subject line and email body. Format your response as JSON with "subje
         notes: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
+        const { checkDuplicateDeal } = await import("./duplicate-detection");
+        
+        const duplicateCheck = await checkDuplicateDeal(
+          ctx.user.tenantId,
+          input.name,
+          input.accountId || null
+        );
+        
+        if (duplicateCheck.isDuplicate) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: duplicateCheck.reason || "A duplicate deal already exists.",
+            cause: {
+              existingRecordId: duplicateCheck.existingRecordId,
+              existingRecordName: duplicateCheck.existingRecordName,
+            },
+          });
+        }
+        
         const { createDeal } = await import("./db-deals");
         return createDeal({ tenantId: ctx.user.tenantId, ...input });
       }),
@@ -2980,6 +3070,8 @@ Generate a subject line and email body. Format your response as JSON with "subje
     delete: protectedProcedure
       .input(z.object({ dealId: z.string() }))
       .mutation(async ({ input, ctx }) => {
+        const { requireDeletePermission } = await import("./permissions");
+        requireDeletePermission(ctx.user.role);
         const { deleteDeal } = await import("./db-deals");
         return deleteDeal(input.dealId, ctx.user.tenantId);
       }),

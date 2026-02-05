@@ -78,10 +78,21 @@ export default function DashboardLayout({
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
   });
   const { loading, user } = useAuth();
+  const [, setLocation] = useLocation();
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
   }, [sidebarWidth]);
+
+  // Check if user has completed onboarding
+  useEffect(() => {
+    if (user && !loading) {
+      const onboardingCompleted = localStorage.getItem("onboarding_completed");
+      if (!onboardingCompleted) {
+        setLocation("/onboarding");
+      }
+    }
+  }, [user, loading, setLocation]);
 
   // Guest access enabled - skip authentication check
   // if (loading) {

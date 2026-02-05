@@ -41,6 +41,7 @@ import Campaigns from "./pages/Campaigns";
 import UserManagement from "./pages/UserManagement";
 import Accounts from "./pages/Accounts";
 import Settings from "./pages/Settings";
+import Onboarding from "./pages/Onboarding";
 
 function Router() {
   return (
@@ -48,6 +49,7 @@ function Router() {
       {/* Auth routes */}
       <Route path="/signup" component={Signup} />
       <Route path="/login" component={Login} />
+      <Route path="/onboarding" component={Onboarding} />
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/settings" component={Settings} />
       <Route path="/reset-password" component={ResetPassword} />

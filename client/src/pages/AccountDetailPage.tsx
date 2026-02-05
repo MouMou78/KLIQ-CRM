@@ -2,8 +2,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { type BuyingRole } from "@/components/RoleBadge";
 import { EditableRoleBadge } from "@/components/EditableRoleBadge";
+import { EngagementScore } from "@/components/EngagementScore";
+import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
-import { Building2, Globe, MapPin, Users, ArrowLeft, Mail, Phone, Briefcase, CheckSquare, Square, Filter } from "lucide-react";
+import { Building2, Globe, MapPin, Users, ArrowLeft, Mail, Phone, Briefcase, CheckSquare, Square, Filter, Search, X, Flame, Droplet, Snowflake } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -39,6 +41,7 @@ export default function AccountDetailPage() {
   const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   const { data: account, isLoading } = trpc.accounts.get.useQuery({ id: accountId });
   const { data: contacts } = trpc.people.list.useQuery();
@@ -49,6 +52,16 @@ export default function AccountDetailPage() {
   // Apply role filter
   if (roleFilter !== "all") {
     linkedContacts = linkedContacts.filter((c: any) => c.buyingRole === roleFilter);
+  }
+  
+  // Apply search filter
+  if (searchQuery.trim()) {
+    const query = searchQuery.toLowerCase();
+    linkedContacts = linkedContacts.filter((c: any) => 
+      c.name?.toLowerCase().includes(query) ||
+      c.email?.toLowerCase().includes(query) ||
+      c.title?.toLowerCase().includes(query)
+    );
   }
   
   // Get activity summaries for all contacts
@@ -182,7 +195,7 @@ export default function AccountDetailPage() {
 
           {/* Linked Contacts */}
           <Card className="p-6">
-               <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <h2 className="text-xl font-semibold flex items-center gap-2">
                   <Users className="h-5 w-5" />
@@ -204,7 +217,28 @@ export default function AccountDetailPage() {
                 </Select>
               </div>
               {linkedContacts.length > 0 && (
-                <div className="flex items-center gap-2">
+                <div className="relative w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search contacts..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 pr-9"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            {linkedContacts.length > 0 && (
+              <div className="flex items-center gap-2 mt-4">
                   {showBulkActions && (
                     <>
                       <span className="text-sm text-muted-foreground">
@@ -230,7 +264,7 @@ export default function AccountDetailPage() {
                   </Button>
                 </div>
               )}
-            </div>
+            
             {linkedContacts.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">
                 No contacts linked to this account yet
@@ -259,6 +293,7 @@ export default function AccountDetailPage() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="font-medium">{contact.name}</p>
+                            <EngagementScore score={contact.leadScore || 0} />
                             <EditableRoleBadge personId={contact.id} role={contact.buyingRole as BuyingRole} />
                             {activitySummaries[contact.id] && activitySummaries[contact.id].totalActivities > 0 && (
                               <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
@@ -274,6 +309,11 @@ export default function AccountDetailPage() {
                           {activitySummaries[contact.id]?.lastActivityDate && (
                             <p className="text-xs text-muted-foreground mt-1">
                               Last contacted {formatRelativeTime(activitySummaries[contact.id].lastActivityDate)}
+                            </p>
+                          )}
+                          {contact.notes && (
+                            <p className="text-xs text-muted-foreground mt-1 italic">
+                              "{contact.notes.length > 100 ? contact.notes.substring(0, 100) + '...' : contact.notes}"
                             </p>
                           )}
                         </div>

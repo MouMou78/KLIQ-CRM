@@ -42,6 +42,7 @@ export default function Campaigns() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createCampaignMutation.mutate({
+      name: subject, // Use subject as campaign name
       subject,
       body,
       recipientType,
