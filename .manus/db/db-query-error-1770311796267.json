@@ -1,0 +1,12 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `automationExecutions` (\n  `id` varchar(36) PRIMARY KEY,\n  `tenantId` varchar(36) NOT NULL,\n  `ruleId` varchar(36) NOT NULL,\n  `threadId` varchar(36),\n  `personId` varchar(36),\n  `status` enum('success', 'failed', 'skipped') NOT NULL,\n  `executedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `errorMessage` text,\n  `metadata` json DEFAULT ('{}'),\n  INDEX `tenant_rule_idx` (`tenantId`, `ruleId`),\n  INDEX `tenant_thread_idx` (`tenantId`, `threadId`),\n  INDEX `tenant_executed_idx` (`tenantId`, `executedAt`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2QkRhwd4AVTLhHG.a0950ca1ba2f --database TQEsx2HByTQrcAiUBn2kww --execute CREATE TABLE IF NOT EXISTS `automationExecutions` (\n  `id` varchar(36) PRIMARY KEY,\n  `tenantId` varchar(36) NOT NULL,\n  `ruleId` varchar(36) NOT NULL,\n  `threadId` varchar(36),\n  `personId` varchar(36),\n  `status` enum('success', 'failed', 'skipped') NOT NULL,\n  `executedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `errorMessage` text,\n  `metadata` json DEFAULT ('{}'),\n  INDEX `tenant_rule_idx` (`tenantId`, `ruleId`),\n  INDEX `tenant_thread_idx` (`tenantId`, `threadId`),\n  INDEX `tenant_executed_idx` (`tenantId`, `executedAt`)\n);",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 10 column 32 near \"'{}'),",
+    "  INDEX `tenant_rule_idx` (`tenantId`, `ruleId`),",
+    "  INDEX `tenant_thread_idx` (`tenantId`, `threadId`),",
+    "  INDEX `tenant_executed_idx` (`tenantId`, `executedAt`)",
+    ")\""
+  ]
+}

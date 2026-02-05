@@ -1926,3 +1926,8 @@
 - [x] Create development-only seed script for sample deal data
 - [x] Fix analytics routes to show advanced metrics (email tracking, velocity)
 - [x] Test analytics dashboard with sample data
+
+## Database Fix
+- [x] Check schema for automationExecutions table
+- [x] Create migration if table is missing
+- [x] Test templates-marketplace page
