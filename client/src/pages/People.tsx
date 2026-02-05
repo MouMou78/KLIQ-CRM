@@ -60,21 +60,50 @@ export default function People() {
   };
 
   const handleBulkTag = () => {
+    // TODO: Implement tag dialog
     toast.success(`Added tags to ${selectedIds.length} contacts`);
     clearSelection();
   };
 
   const handleBulkAssign = () => {
+    // TODO: Implement assign dialog
     toast.success(`Assigned ${selectedIds.length} contacts`);
     clearSelection();
   };
 
   const handleBulkEnroll = () => {
+    // TODO: Implement sequence enrollment dialog
     toast.success(`Enrolled ${selectedIds.length} contacts in sequence`);
     clearSelection();
   };
 
   const handleBulkExport = () => {
+    if (!filteredPeople) return;
+    
+    const selectedPeople = filteredPeople.filter(p => selectedIds.includes(p.id));
+    const csvContent = [
+      ['Name', 'Email', 'Company', 'Title', 'Phone', 'Fit Score', 'Intent Score'].join(','),
+      ...selectedPeople.map(p => [
+        p.fullName,
+        p.primaryEmail,
+        p.companyName || '',
+        p.roleTitle || '',
+        p.phone || '',
+        p.fitScore || 0,
+        p.intentScore || 0
+      ].join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `contacts-export-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
     toast.success(`Exported ${selectedIds.length} contacts`);
     clearSelection();
   };

@@ -3649,6 +3649,32 @@ Generate a subject line and email body. Format your response as JSON with "subje
       }),
    }),
 
+  search: router({
+    global: protectedProcedure
+      .input(z.object({
+        query: z.string().min(2),
+      }))
+      .query(async ({ input, ctx }) => {
+        const query = `%${input.query}%`;
+        const tenantId = ctx.user.tenantId;
+        
+        // Search people
+        const people = await db.searchPeople(tenantId, query);
+        
+        // Search accounts
+        const accounts = await db.searchAccounts(tenantId, query);
+        
+        // Search threads
+        const threads = await db.searchThreads(tenantId, query);
+        
+        return {
+          people: people.slice(0, 5),
+          accounts: accounts.slice(0, 5),
+          threads: threads.slice(0, 5),
+        };
+      }),
+  }),
+
   aiEmail: router({
     generate: protectedProcedure
       .input(z.object({

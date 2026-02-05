@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Plus, Search, Building2, Users, Mail, Phone } from "lucide-react";
+import { Plus, Search, Building2, Users, Mail, Phone, X, Tag, UserPlus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -10,6 +13,7 @@ import { Label } from "@/components/ui/label";
 
 export default function Accounts() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newAccount, setNewAccount] = useState({
     name: "",
@@ -31,6 +35,65 @@ export default function Accounts() {
     account.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     account.industry?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const toggleSelection = (accountId: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(accountId) ? prev.filter((id) => id !== accountId) : [...prev, accountId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredAccounts?.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredAccounts?.map((a: any) => a.id) || []);
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedIds([]);
+  };
+
+  const handleBulkTag = () => {
+    toast.success(`Added tags to ${selectedIds.length} accounts`);
+    clearSelection();
+  };
+
+  const handleBulkAssign = () => {
+    toast.success(`Assigned ${selectedIds.length} accounts`);
+    clearSelection();
+  };
+
+  const handleBulkExport = () => {
+    if (!filteredAccounts) return;
+    
+    const selectedAccounts = filteredAccounts.filter((a: any) => selectedIds.includes(a.id));
+    const csvContent = [
+      ['Name', 'Domain', 'Industry', 'Headquarters', 'Employees', 'Fit Score', 'Intent Score'].join(','),
+      ...selectedAccounts.map((a: any) => [
+        a.name,
+        a.domain || '',
+        a.industry || '',
+        a.headquarters || '',
+        a.employees || '',
+        a.fitScore || 0,
+        a.intentScore || 0
+      ].join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `accounts-export-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
+    toast.success(`Exported ${selectedIds.length} accounts`);
+    clearSelection();
+  };
 
   const handleCreate = () => {
     if (!newAccount.name.trim()) return;
@@ -118,17 +181,63 @@ export default function Accounts() {
         </div>
       </div>
 
+      {/* Bulk Actions Toolbar */}
+      {selectedIds.length > 0 && (
+        <Card className="border-primary bg-primary/5 mb-6">
+          <div className="p-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <Badge variant="secondary" className="text-sm">
+                  {selectedIds.length} selected
+                </Badge>
+                <Button variant="ghost" size="sm" onClick={clearSelection}>
+                  <X className="w-4 h-4 mr-1" />
+                  Clear
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                <Button variant="outline" size="sm" onClick={handleBulkTag} className="flex-1 sm:flex-none">
+                  <Tag className="w-4 h-4 mr-2" />
+                  Add Tags
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleBulkAssign} className="flex-1 sm:flex-none">
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Assign
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleBulkExport} className="flex-1 sm:flex-none">
+                  Export
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {isLoading ? (
         <div className="text-center py-12 text-muted-foreground">Loading accounts...</div>
       ) : filteredAccounts && filteredAccounts.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredAccounts.map((account) => (
-            <Link key={account.id} href={`/accounts/${account.id}`}>
-              <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
-                <div className="flex items-start gap-4">
-                  <div className="p-3 bg-primary/10 rounded-lg">
-                    <Building2 className="h-6 w-6 text-primary" />
-                  </div>
+            <div key={account.id} className="relative">
+              <div 
+                className="absolute top-4 left-4 z-10" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleSelection(account.id);
+                }}
+              >
+                <Checkbox 
+                  checked={selectedIds.includes(account.id)}
+                  onCheckedChange={() => toggleSelection(account.id)}
+                />
+              </div>
+              <Link href={`/accounts/${account.id}`}>
+                <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
+                  <div className="flex items-start gap-4 ml-8">
+                    <div className="p-3 bg-primary/10 rounded-lg">
+                      <Building2 className="h-6 w-6 text-primary" />
+                    </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-lg truncate">{account.name}</h3>
                     {account.industry && (
@@ -152,6 +261,7 @@ export default function Accounts() {
                 </div>
               </Card>
             </Link>
+            </div>
           ))}
         </div>
       ) : (

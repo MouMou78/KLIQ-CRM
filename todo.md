@@ -1873,4 +1873,12 @@
 - [x] Add breadcrumb navigation to EventDetail page
 - [x] Add breadcrumb navigation to ThreadDetail page
 - [x] Test keyboard shortcuts and breadcrumbs functionality
-- [ ] Create final checkpoint and publish to 1twentyinternal.com
+- [x] Create final checkpoint and publish to 1twentyinternal.com
+
+## Advanced Features (Post-Publishing Enhancements)
+- [x] Implement global search with Cmd/Ctrl+K keyboard shortcut
+- [x] Add search across contacts, deals, and threads
+- [x] Add bulk actions to People page (bulk email, tag assignment, export)
+- [x] Add bulk actions to Accounts page (bulk operations)
+- [ ] Implement dashboard customization with pinnable widgets (deferred - requires significant development time)
+- [x] Test all new features

@@ -2131,3 +2131,73 @@ export async function deleteEmailExample(id: string, userId: string) {
     .where(and(eq(emailExamples.id, id), eq(emailExamples.userId, userId)));
   return { success: true };
 }
+
+
+// ============ GLOBAL SEARCH ============
+
+export async function searchPeople(tenantId: string, query: string) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const { people } = await import("../drizzle/schema");
+  const { like, or } = await import("drizzle-orm");
+  
+  return await db
+    .select()
+    .from(people)
+    .where(
+      and(
+        eq(people.tenantId, tenantId),
+        or(
+          like(people.fullName, query),
+          like(people.primaryEmail, query),
+          like(people.companyName, query)
+        )
+      )
+    )
+    .limit(10);
+}
+
+export async function searchAccounts(tenantId: string, query: string) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const { accounts } = await import("../drizzle/schema");
+  const { like, or } = await import("drizzle-orm");
+  
+  return await db
+    .select()
+    .from(accounts)
+    .where(
+      and(
+        eq(accounts.tenantId, tenantId),
+        or(
+          like(accounts.name, query),
+          like(accounts.domain, query)
+        )
+      )
+    )
+    .limit(10);
+}
+
+export async function searchThreads(tenantId: string, query: string) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const { threads } = await import("../drizzle/schema");
+  const { like, or } = await import("drizzle-orm");
+  
+  return await db
+    .select()
+    .from(threads)
+    .where(
+      and(
+        eq(threads.tenantId, tenantId),
+        or(
+          like(threads.title, query),
+          like(threads.intent, query)
+        )
+      )
+    )
+    .limit(10);
+}

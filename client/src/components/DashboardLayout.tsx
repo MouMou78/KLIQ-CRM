@@ -31,6 +31,7 @@ import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 import { NotificationBell } from './NotificationBell';
 import { useTheme } from "./theme-provider";
+import { GlobalSearch } from './GlobalSearch';
 
 const menuItems = [
   { icon: Home, label: "Home", path: "/" },
@@ -77,6 +78,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const [searchOpen, setSearchOpen] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
@@ -137,7 +139,7 @@ export default function DashboardLayout({
         } as CSSProperties
       }
     >
-      <DashboardLayoutContent setSidebarWidth={setSidebarWidth}>
+      <DashboardLayoutContent setSidebarWidth={setSidebarWidth} searchOpen={searchOpen} setSearchOpen={setSearchOpen}>
         {children}
       </DashboardLayoutContent>
     </SidebarProvider>
@@ -173,9 +175,13 @@ function ThemeToggle() {
 type DashboardLayoutContentProps = {
   children: React.ReactNode;
   setSidebarWidth: (width: number) => void;
+  searchOpen: boolean;
+  setSearchOpen: (open: boolean) => void;
 };
 
 function DashboardLayoutContent({
+  searchOpen,
+  setSearchOpen,
   children,
   setSidebarWidth,
 }: DashboardLayoutContentProps) {
@@ -187,6 +193,18 @@ function DashboardLayoutContent({
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
+
+  // Global search keyboard shortcut
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   useEffect(() => {
     if (isCollapsed) {
@@ -456,6 +474,7 @@ function DashboardLayoutContent({
         )}
         <main className="flex-1 p-4">{children}</main>
       </SidebarInset>
+      <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
     </>
   );
 }
