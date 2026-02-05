@@ -1634,3 +1634,10 @@
 - [x] Implement drag-and-drop widget positioning
 - [x] Add widget refresh functionality
 - [x] Test all widgets with real data
+
+
+## Database Migration Fix
+- [x] Generate migration SQL for automationRules table
+- [x] Generate migration SQL for automationExecutions table
+- [x] Apply migration SQL via webdev_execute_sql
+- [x] Verify tables exist and workflow automation works
