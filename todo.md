@@ -1393,3 +1393,46 @@
 - [x] Add campaign performance trends line chart
 - [x] Connect to existing analytics backend API
 - [x] Test dashboard with real CRM data
+
+## AI-Powered Email Assistant
+- [x] Design AI email assistant UI integrated into email composition
+- [x] Implement AI email generation endpoint using LLM
+- [x] Add CRM context integration (contact info, deal stage, previous interactions, notes)
+- [x] Create email improvement suggestions (tone, clarity, call-to-action, length, personalization)
+- [x] Implement email preview with AI suggestions
+- [x] Add one-click apply AI suggestions
+- [x] Create AIEmailAssistant component
+- [x] Add AI email router to backend
+- [x] Test AI email generation with various contact types
+
+## Best Practice Email Learning System
+- [ ] Create email examples table in database (subject, body, category, performance metrics)
+- [ ] Design UI for marking emails as "best practice" examples
+- [ ] Implement email performance tracking (open rate, reply rate, conversion)
+- [ ] Build AI training endpoint that learns from successful emails
+- [ ] Add email pattern analysis (structure, tone, length, CTAs)
+- [ ] Create "Teach AI" interface for uploading successful cold emails
+- [ ] Implement style extraction from example emails
+- [ ] Add AI prompt enhancement based on learned patterns
+- [ ] Test learning system with various email styles
+
+## Task Reminders & Notifications
+- [ ] Design notification preferences UI
+- [ ] Implement browser notification permission request
+- [ ] Create task reminder scheduling system
+- [ ] Add desktop notifications for upcoming tasks (15 min, 1 hour before)
+- [ ] Implement email notifications for overdue tasks
+- [ ] Add snooze functionality for reminders
+- [ ] Create notification history/log
+- [ ] Test reminder timing accuracy across timezones
+
+## Custom Reporting System
+- [ ] Design report builder UI with drag-and-drop metrics
+- [ ] Implement custom metric selection (deals, contacts, activities, revenue)
+- [ ] Add date range filters (custom, this week, this month, this quarter, this year)
+- [ ] Create chart type selection (bar, line, pie, table)
+- [ ] Implement report preview
+- [ ] Add export functionality (PDF, CSV, Excel)
+- [ ] Create saved reports feature
+- [ ] Add scheduled report generation and email delivery
+- [ ] Test report generation with complex filters

@@ -3248,7 +3248,37 @@ Generate a subject line and email body. Format your response as JSON with "subje
         await db.markAllNotificationsAsRead(ctx.user.id);
         return { success: true };
       }),
+   }),
+
+  aiEmail: router({
+    generate: protectedProcedure
+      .input(z.object({
+        contactId: z.string().optional(),
+        dealId: z.string().optional(),
+        accountId: z.string().optional(),
+        purpose: z.string(),
+        tone: z.string().optional(),
+        additionalContext: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { generateEmail } = await import("./ai-email");
+        return generateEmail({
+          tenantId: ctx.user.tenantId,
+          ...input,
+        });
+      }),
+    
+    improve: protectedProcedure
+      .input(z.object({
+        subject: z.string(),
+        body: z.string(),
+        improvementType: z.enum(["clarity", "tone", "length", "cta", "personalization"]),
+        targetTone: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { improveEmail } = await import("./ai-email");
+        return improveEmail(input);
+      }),
   }),
 });
-
 export type AppRouter = typeof appRouter;
