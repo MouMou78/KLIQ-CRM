@@ -2856,6 +2856,49 @@ Generate a subject line and email body. Format your response as JSON with "subje
         await linkEventToEntity(input.eventId, input.entityType, input.entityId);
         return { success: true };
       }),
+
+    captureMeetingNotes: protectedProcedure
+      .input(z.object({
+        eventId: z.string(),
+        notes: z.string(),
+        outcome: z.enum(["successful", "rescheduled", "cancelled", "no_show"]).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { captureMeetingNotes } = await import("./calendar-sync");
+        return captureMeetingNotes(input.eventId, input.notes, input.outcome);
+      }),
+
+    linkAttendees: protectedProcedure
+      .input(z.object({
+        eventId: z.string(),
+        attendeeEmails: z.array(z.string()),
+      }))
+      .mutation(async ({ input }) => {
+        const { linkAttendeesToContacts } = await import("./calendar-sync");
+        return linkAttendeesToContacts(input.eventId, input.attendeeEmails);
+      }),
+
+    getAttendees: protectedProcedure
+      .input(z.object({ eventId: z.string() }))
+      .query(async ({ input }) => {
+        const { getMeetingAttendees } = await import("./calendar-sync");
+        return getMeetingAttendees(input.eventId);
+      }),
+
+    generateFollowUpTasks: protectedProcedure
+      .input(z.object({
+        eventId: z.string(),
+        taskTemplates: z.array(z.object({
+          title: z.string(),
+          description: z.string().optional(),
+          dueInDays: z.number(),
+          priority: z.enum(["low", "medium", "high"]).optional(),
+        })),
+      }))
+      .mutation(async ({ input }) => {
+        const { generateFollowUpTasks } = await import("./calendar-sync");
+        return generateFollowUpTasks(input.eventId, input.taskTemplates);
+      }),
   }),
   
   documents: router({

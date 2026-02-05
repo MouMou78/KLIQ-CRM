@@ -306,3 +306,192 @@ export async function syncAllCalendars(tenantId: string) {
 
   return { synced: syncedCount };
 }
+
+/**
+ * Automatically capture meeting notes from calendar event
+ */
+export async function captureMeetingNotes(
+  eventId: string,
+  notes: string,
+  outcome?: "successful" | "rescheduled" | "cancelled" | "no_show"
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Update event with notes
+  await db
+    .update(calendarEvents)
+    .set({ 
+      description: notes,
+      status: outcome === "cancelled" ? "cancelled" : "confirmed"
+    })
+    .where(eq(calendarEvents.id, eventId));
+
+  // Get event details to create activity
+  const event = await db
+    .select()
+    .from(calendarEvents)
+    .where(eq(calendarEvents.id, eventId))
+    .limit(1)
+    .then(rows => rows[0]);
+
+  if (!event) return;
+
+  // Create activity record for the meeting
+  const { createActivity } = await import("./db");
+  if (event.linkedContactId) {
+    await createActivity({
+      tenantId: event.tenantId,
+      userId: event.linkedContactId, // Will be replaced with actual user ID
+      personId: event.linkedContactId,
+      activityType: "meeting",
+      title: `Meeting: ${event.title}`,
+      description: notes,
+      metadata: { outcome, eventId },
+    });
+  }
+
+  return { success: true };
+}
+
+/**
+ * Track and link meeting attendees to contacts
+ */
+export async function linkAttendeesToContacts(
+  eventId: string,
+  attendeeEmails: string[]
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { people } = await import("../drizzle/schema");
+  const event = await db
+    .select()
+    .from(calendarEvents)
+    .where(eq(calendarEvents.id, eventId))
+    .limit(1)
+    .then(rows => rows[0]);
+
+  if (!event) throw new Error("Event not found");
+
+  const linkedContacts: string[] = [];
+
+  // Find contacts by email and link them
+  for (const email of attendeeEmails) {
+    const contact = await db
+      .select()
+      .from(people)
+      .where(and(eq(people.primaryEmail, email), eq(people.tenantId, event.tenantId)))
+      .limit(1)
+      .then(rows => rows[0]);
+    if (contact) {
+      linkedContacts.push(contact.id);
+      
+      // Create activity for this contact
+      const { createActivity } = await import("./db");
+      await createActivity({
+        tenantId: event.tenantId,
+        userId: contact.id,
+        personId: contact.id,
+        activityType: "meeting",
+        title: `Meeting: ${event.title}`,
+        description: event.description || undefined,
+        metadata: { eventId, attendees: attendeeEmails },
+      });
+    }
+  }
+
+  // Update event with primary linked contact (first one found)
+  if (linkedContacts.length > 0 && !event.linkedContactId) {
+    await db
+      .update(calendarEvents)
+      .set({ linkedContactId: linkedContacts[0] })
+      .where(eq(calendarEvents.id, eventId));
+  }
+
+  return { linkedContacts, total: linkedContacts.length };
+}
+
+/**
+ * Get meeting attendees for an event
+ */
+export async function getMeetingAttendees(eventId: string) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const event = await db
+    .select()
+    .from(calendarEvents)
+    .where(eq(calendarEvents.id, eventId))
+    .limit(1)
+    .then(rows => rows[0]);
+
+  if (!event) return [];
+
+  return event.attendees || [];
+}
+
+/**
+ * Generate follow-up tasks from meeting outcomes
+ */
+export async function generateFollowUpTasks(
+  eventId: string,
+  taskTemplates: Array<{
+    title: string;
+    description?: string;
+    dueInDays: number;
+    priority?: "low" | "medium" | "high";
+  }>
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const event = await db
+    .select()
+    .from(calendarEvents)
+    .where(eq(calendarEvents.id, eventId))
+    .limit(1)
+    .then(rows => rows[0]);
+
+  if (!event) throw new Error("Event not found");
+
+  const { tasks } = await import("../drizzle/schema");
+  const createdTasks: string[] = [];
+
+  for (const template of taskTemplates) {
+    const taskId = randomUUID();
+    const dueDate = new Date(event.endTime);
+    dueDate.setDate(dueDate.getDate() + template.dueInDays);
+
+    await db.insert(tasks).values({
+      id: taskId,
+      tenantId: event.tenantId,
+      title: template.title,
+      description: template.description || null,
+      dueDate,
+      priority: template.priority || "medium",
+      status: "todo",
+      createdById: event.linkedContactId || event.tenantId,
+      linkedEntityType: event.linkedContactId ? "contact" : event.linkedAccountId ? "account" : event.linkedDealId ? "deal" : null,
+      linkedEntityId: event.linkedContactId || event.linkedAccountId || event.linkedDealId || null,
+    });
+
+    createdTasks.push(taskId);
+
+    // Create activity for task creation
+    const { createActivity } = await import("./db");
+    if (event.linkedContactId) {
+      await createActivity({
+        tenantId: event.tenantId,
+        userId: event.linkedContactId,
+        personId: event.linkedContactId,
+        activityType: "task",
+        title: `Task created: ${template.title}`,
+        description: template.description,
+        metadata: { taskId, eventId },
+      });
+    }
+  }
+
+  return { createdTasks, total: createdTasks.length };
+}
