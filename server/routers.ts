@@ -2944,6 +2944,23 @@ Generate a subject line and email body. Format your response as JSON with "subje
         await deleteTask(input.taskId);
         return { success: true };
       }),
+    
+    setReminder: protectedProcedure
+      .input(z.object({
+        taskId: z.string(),
+        reminderAt: z.date(),
+      }))
+      .mutation(async ({ input }) => {
+        const { updateTask } = await import("./db-tasks");
+        await updateTask(input.taskId, { reminderAt: input.reminderAt, reminderSent: false });
+        return { success: true };
+      }),
+    
+    getUpcomingReminders: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { getUpcomingReminders } = await import("./task-reminders");
+        return getUpcomingReminders(ctx.user.id, ctx.user.tenantId);
+      }),
   }),
   
   bulkImport: router({

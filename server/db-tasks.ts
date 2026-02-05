@@ -106,6 +106,8 @@ export async function updateTask(
     dueDate: Date;
     assignedToId: string;
     completedAt: Date;
+    reminderAt: Date;
+    reminderSent: boolean;
   }>
 ) {
   const db = await getDb();

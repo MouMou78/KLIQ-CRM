@@ -691,6 +691,8 @@ export const tasks = mysqlTable("tasks", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   completedAt: timestamp("completedAt"),
+  reminderAt: timestamp("reminderAt"),
+  reminderSent: boolean("reminderSent").default(false).notNull(),
 }, (table) => ({
   tenantIdx: index("tasks_tenant_idx").on(table.tenantId),
   assignedIdx: index("tasks_assigned_idx").on(table.assignedToId),

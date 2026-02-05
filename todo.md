@@ -1478,3 +1478,33 @@
 - [ ] Add notification preferences to user settings
 - [ ] Test task reminders with various time intervals
 - [ ] Test notification delivery (desktop and email)
+
+## Task Reminders Implementation
+- [x] Add reminderAt and reminderSent fields to tasks table
+- [x] Generate and apply database migration
+- [x] Create backend endpoint to fetch due/overdue tasks
+- [x] Implement notification sending logic (email)
+- [x] Add setReminder and getUpcomingReminders API endpoints
+- [x] Create task-reminders.ts module with checkAndSendReminders function
+- [ ] Add reminder time picker to task creation/edit UI
+- [ ] Build notification preferences page
+- [ ] Test reminder notifications
+
+## AI Email Assistant in Contact/Deal Pages
+- [ ] Add email composition section to PersonDetail page
+- [ ] Integrate AIEmailAssistant component in PersonDetail
+- [ ] Add email composition section to DealDetail page
+- [ ] Integrate AIEmailAssistant component in DealDetail
+- [ ] Pass proper context (contact/deal info) to AI
+- [ ] Test email generation from contact and deal pages
+
+## Custom Report Builder
+- [ ] Design report builder UI with metric selection
+- [ ] Create backend endpoint for custom report generation
+- [ ] Implement date range picker
+- [ ] Add entity type filter (contacts, deals, accounts, tasks)
+- [ ] Add custom metric selection (count, sum, avg, conversion rates)
+- [ ] Implement grouping by dimensions (date, owner, stage, etc.)
+- [ ] Add export functionality (CSV, PDF)
+- [ ] Build report preview with charts
+- [ ] Test report generation and export
