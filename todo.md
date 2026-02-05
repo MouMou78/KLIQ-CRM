@@ -1491,20 +1491,19 @@
 - [ ] Test reminder notifications
 
 ## AI Email Assistant in Contact/Deal Pages
-- [ ] Add email composition section to PersonDetail page
-- [ ] Integrate AIEmailAssistant component in PersonDetail
-- [ ] Add email composition section to DealDetail page
-- [ ] Integrate AIEmailAssistant component in DealDetail
-- [ ] Pass proper context (contact/deal info) to AI
-- [ ] Test email generation from contact and deal pages
+- [x] Add email composition Card section to PersonDetail page
+- [x] Integrate AIEmailAssistant component in PersonDetail with contact context
+- [x] Add email composition Card section to DealDetail page
+- [x] Integrate AIEmailAssistant component in DealDetail with deal context
+- [x] Test email generation from contact and deal pages
 
 ## Task Reminder UI
 - [x] Add date/time picker component to task creation dialog
 - [x] Update tasks.create API to accept reminderAt parameter
 - [x] Update createTask function to support reminderAt
 - [ ] Add date/time picker to task edit dialog
-- [ ] Display upcoming reminders in task list
-- [ ] Test reminder UI workflow
+- [ ] Update tasks.update API to accept reminderAt parameter
+- [ ] Test reminder editing workflow
 
 ## Custom Report Builder
 - [ ] Design report builder UI with metric selection

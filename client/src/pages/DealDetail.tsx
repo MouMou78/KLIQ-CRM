@@ -1,10 +1,11 @@
 import { useParams, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, DollarSign, Calendar, User, Building2 } from "lucide-react";
 import Notes from "@/components/Notes";
+import { AIEmailAssistant } from "@/components/AIEmailAssistant";
 import { format } from "date-fns";
 
 export default function DealDetail() {
@@ -142,6 +143,25 @@ export default function DealDetail() {
                 <p className="mt-1">User ID: {deal.ownerUserId}</p>
               </div>
             )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Email Composition Section */}
+      <div className="mt-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Send Email</CardTitle>
+            <CardDescription>Compose an email related to this deal</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AIEmailAssistant
+              dealId={dealId}
+              onApply={(subject: string, body: string) => {
+                // Email sending logic would go here
+                console.log('Sending email:', { subject, body });
+              }}
+            />
           </CardContent>
         </Card>
       </div>

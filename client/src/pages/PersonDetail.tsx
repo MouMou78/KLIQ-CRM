@@ -8,6 +8,7 @@ import { Streamdown } from "streamdown";
 import { Link } from "wouter";
 import { EmailActivityTimeline } from "@/components/EmailActivityTimeline";
 import Notes from "@/components/Notes";
+import { AIEmailAssistant } from "@/components/AIEmailAssistant";
 
 interface PersonDetailProps {
   personId: string;
@@ -380,6 +381,23 @@ export default function PersonDetail({ personId }: PersonDetailProps) {
             ) : (
               <p className="text-muted-foreground text-center py-8">No threads yet</p>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Email Composition Section */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Send Email</CardTitle>
+            <CardDescription>Compose an email to {person.firstName}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AIEmailAssistant
+              contactId={personId}
+              onApply={(subject: string, body: string) => {
+                // Email sending logic would go here
+                console.log('Sending email:', { subject, body });
+              }}
+            />
           </CardContent>
         </Card>
 
