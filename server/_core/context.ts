@@ -12,8 +12,43 @@ export type TrpcContext = {
 export async function createContext(
   opts: CreateExpressContextOptions
 ): Promise<TrpcContext> {
-  // Use guest access for now (OAuth disabled)
-  return createGuestContext(opts.req, opts.res);
+  // Use custom authentication with session cookies
+  let user: User | null = null;
+
+  try {
+    // Check for custom auth session cookie
+    const sessionCookie = opts.req.cookies?.['custom_auth_session'];
+    if (sessionCookie) {
+      const sessionData = JSON.parse(sessionCookie);
+      // Fetch user from database using session data
+      const { getDb } = await import('../db');
+      const { users: userTable } = await import('../../drizzle/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      const db = await getDb();
+      if (db) {
+        const users = await db
+          .select()
+          .from(userTable)
+          .where(eq(userTable.id, sessionData.userId))
+          .limit(1);
+        
+        if (users.length > 0) {
+          user = users[0];
+        }
+      }
+    }
+  } catch (error) {
+    // Authentication is optional for public procedures
+    console.error('Auth error:', error);
+    user = null;
+  }
+
+  return {
+    req: opts.req,
+    res: opts.res,
+    user,
+  };
   
   /* Original OAuth flow - disabled for guest access
   let user: User | null = null;
