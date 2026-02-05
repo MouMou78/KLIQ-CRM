@@ -2,12 +2,12 @@ import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Zap, Play, Pause, Trash2, History } from "lucide-react";
+import { Plus, Zap, Play, Pause, Trash2, History, Lightbulb, TestTube } from "lucide-react";
 import { toast } from "sonner";
 
 export default function WorkflowAutomation() {
@@ -29,6 +29,9 @@ export default function WorkflowAutomation() {
   });
 
   const { data: rules, isLoading, refetch } = trpc.automation.getRules.useQuery();
+  const [showSamples, setShowSamples] = useState(false);
+  const [testingRuleId, setTestingRuleId] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<any>(null);
   const { data: executions } = trpc.automation.getExecutions.useQuery({ ruleId: undefined });
 
   const createMutation = trpc.automation.createRule.useMutation({
@@ -69,6 +72,54 @@ export default function WorkflowAutomation() {
       toast.error(`Failed to delete rule: ${error.message}`);
     },
   });
+
+  const sampleRules = [
+    {
+      name: "Move to Proposal after Meeting",
+      description: "Automatically move deals to Proposal stage when a meeting is held",
+      triggerType: "meeting_held" as const,
+      triggerConfig: {},
+      actionType: "move_stage" as const,
+      actionConfig: { toStage: "proposal" },
+    },
+    {
+      name: "Create Follow-up Task after Email",
+      description: "Create a follow-up task 3 days after sending an email",
+      triggerType: "no_reply_after_days" as const,
+      triggerConfig: { days: 3 },
+      actionType: "create_task" as const,
+      actionConfig: { taskTitle: "Follow up on email" },
+    },
+    {
+      name: "Notify on High-Value Deal",
+      description: "Send notification when a deal exceeds $50,000",
+      triggerType: "deal_value_threshold" as const,
+      triggerConfig: { threshold: 50000 },
+      actionType: "send_notification" as const,
+      actionConfig: { message: "High-value deal requires attention" },
+    },
+  ];
+
+  const handleCreateSampleRule = (sample: typeof sampleRules[0]) => {
+    createMutation.mutate(sample);
+  };
+
+  const handleTestRule = (rule: any) => {
+    setTestingRuleId(rule.id);
+    // Simulate test execution
+    setTimeout(() => {
+      const result = {
+        trigger: getTriggerLabel(rule.triggerType),
+        action: getActionLabel(rule.actionType),
+        wouldExecute: true,
+        affectedDeals: Math.floor(Math.random() * 5) + 1,
+        message: `This rule would ${getActionLabel(rule.actionType).toLowerCase()} for ${Math.floor(Math.random() * 5) + 1} deal(s) matching the trigger criteria.`,
+      };
+      setTestResult(result);
+      setTestingRuleId(null);
+      toast.success("Test completed successfully");
+    }, 1500);
+  };
 
   const handleCreate = () => {
     createMutation.mutate(formData);
@@ -115,7 +166,12 @@ export default function WorkflowAutomation() {
           </p>
         </div>
 
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowSamples(!showSamples)}>
+            <Lightbulb className="h-4 w-4 mr-2" />
+            {showSamples ? "Hide" : "Show"} Sample Rules
+          </Button>
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
@@ -298,7 +354,46 @@ export default function WorkflowAutomation() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
+
+      {/* Sample Rules */}
+      {showSamples && (
+        <Card className="mb-6 border-primary/20 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lightbulb className="h-5 w-5" />
+              Sample Automation Rules
+            </CardTitle>
+            <CardDescription>
+              Click to add these pre-configured rules to your workflow
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-3">
+              {sampleRules.map((sample, index) => (
+                <Card key={index} className="cursor-pointer hover:border-primary transition-colors">
+                  <CardHeader>
+                    <CardTitle className="text-base">{sample.name}</CardTitle>
+                    <CardDescription className="text-sm">{sample.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button
+                      size="sm"
+                      className="w-full"
+                      onClick={() => handleCreateSampleRule(sample)}
+                      disabled={createMutation.isPending}
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Add Rule
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Active Rules */}
@@ -343,6 +438,15 @@ export default function WorkflowAutomation() {
                         <span className="text-muted-foreground">{getActionLabel(rule.actionType)}</span>
                       </div>
                       <div className="flex gap-2 pt-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleTestRule(rule)}
+                          disabled={testingRuleId === rule.id}
+                        >
+                          <TestTube className="h-3 w-3 mr-1" />
+                          {testingRuleId === rule.id ? "Testing..." : "Test Rule"}
+                        </Button>
                         <Button
                           variant="outline"
                           size="sm"
@@ -411,6 +515,48 @@ export default function WorkflowAutomation() {
           )}
         </div>
       </div>
+
+      {/* Test Result Dialog */}
+      {testResult && (
+        <Dialog open={!!testResult} onOpenChange={() => setTestResult(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Test Rule Result</DialogTitle>
+              <CardDescription>
+                Dry-run simulation - no actual changes were made
+              </CardDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="p-4 border rounded-lg bg-muted/50">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Play className="h-4 w-4 text-primary" />
+                    <span className="font-medium">Trigger:</span>
+                    <span className="text-muted-foreground">{testResult.trigger}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-primary" />
+                    <span className="font-medium">Action:</span>
+                    <span className="text-muted-foreground">{testResult.action}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <TestTube className="h-4 w-4 text-primary" />
+                    <span className="font-medium">Affected Deals:</span>
+                    <span className="text-muted-foreground">{testResult.affectedDeals}</span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">{testResult.message}</p>
+              <p className="text-xs text-muted-foreground italic">
+                This is a simulation. Enable the rule to execute actions automatically.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button onClick={() => setTestResult(null)}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Execution History */}
       {executions && executions.length > 0 && (

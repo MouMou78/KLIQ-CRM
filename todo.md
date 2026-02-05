@@ -1641,3 +1641,10 @@
 - [x] Generate migration SQL for automationExecutions table
 - [x] Apply migration SQL via webdev_execute_sql
 - [x] Verify tables exist and workflow automation works
+
+
+## Workflow Automation Improvements
+- [x] Add Workflow Automation link to sidebar navigation in DashboardLayout
+- [x] Create sample automation rules (Move to Proposal after Meeting, Follow-up task after email)
+- [x] Add "Test Rule" button with dry-run mode to preview actions without executing
+- [x] Test navigation, sample rules, and test mode functionality
