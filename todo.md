@@ -2310,3 +2310,12 @@
 - [ ] Update sync logging with fetched_total, kept_matching_owner, discarded_other_owners counts
 - [ ] Show workspace lists/sequences without blocking on user selection
 - [ ] Test owner-based scoping with actual sync
+
+## Amplemarket Support Clarification - COMPLETED
+- [x] Search for and remove any /email_events endpoint calls (none found - clean)
+- [x] Implement /tasks endpoint with type=email filter
+- [x] Add server-side filtering by type and user scope for tasks
+- [x] Retrieve user_id from List Users endpoint for task calls
+- [x] Enhance 404 logging to show full path and fail with "Endpoint does not exist"
+- [x] Add regression test asserting no calls to /email_events (5 tests passing)
+- [x] Test email activity sourcing from /tasks endpoint

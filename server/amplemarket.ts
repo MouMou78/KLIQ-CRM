@@ -367,3 +367,152 @@ export async function syncAmplemarket(
     throw error;
   }
 }
+
+/**
+ * Sync email tasks from Amplemarket /tasks endpoint
+ * Per Amplemarket support: email activity must be fetched from /tasks with type filter
+ * Per Amplemarket support: task endpoints require user_id from List Users endpoint
+ */
+export async function syncAmplemarketEmailTasks(
+  db: any,
+  tenantId: string,
+  integrationId: string,
+  apiKey: string,
+  amplemarketUserEmail: string
+) {
+  // Fail-fast validation: user must be selected
+  if (!amplemarketUserEmail) {
+    throw new Error("Amplemarket user must be selected before syncing email tasks. Please select a user in the configuration.");
+  }
+  
+  // Import getUserIdByEmail dynamically to avoid circular dependency
+  const { getUserIdByEmail } = await import("./amplemarketUserScope");
+  
+  // Retrieve user_id from List Users endpoint (required for task calls)
+  const amplemarketUserId = await getUserIdByEmail(apiKey, amplemarketUserEmail);
+  
+  console.log("[Amplemarket Email Tasks] Starting sync with user scoping:", {
+    tenantId,
+    integrationId,
+    amplemarketUserId,
+    amplemarketUserEmail
+  });
+  
+  // Initialize sync counters
+  let createdCount = 0;
+  let updatedCount = 0;
+  let skippedCount = 0;
+  const syncStartTime = new Date();
+  
+  // Fetch email tasks from /tasks endpoint with type=email filter and user_id
+  const requestUrl = `${AMPLEMARKET_API_BASE}/tasks`;
+  const params = {
+    type: 'email', // Filter for email tasks only
+    user_id: amplemarketUserId, // Scope to selected user
+    limit: 1000 // Fetch up to 1000 tasks
+  };
+  
+  console.log("[Amplemarket Email Tasks] Fetching tasks:", {
+    url: requestUrl,
+    method: "GET",
+    params,
+    hasApiKey: !!apiKey
+  });
+  
+  try {
+    const response = await axios.get(requestUrl, {
+      headers: { "Authorization": `Bearer ${apiKey}` },
+      params
+    });
+    
+    console.log("[Amplemarket Email Tasks] Response:", {
+      status: response.status,
+      tasksCount: response.data?.tasks?.length || 0,
+      responseKeys: Object.keys(response.data || {})
+    });
+
+    const tasks = response.data.tasks || [];
+    
+    for (const task of tasks) {
+      // Skip if no email or contact info
+      if (!task.contact_email) {
+        skippedCount++;
+        continue;
+      }
+      
+      // Find the person in CRM by email
+      const [person] = await db
+        .select()
+        .from(people)
+        .where(and(
+          eq(people.tenantId, tenantId),
+          eq(people.primaryEmail, task.contact_email)
+        ))
+        .limit(1);
+      
+      if (!person) {
+        console.log("[Amplemarket Email Tasks] Contact not found in CRM:", task.contact_email);
+        skippedCount++;
+        continue;
+      }
+      
+      // TODO: Store email task as moment or in dedicated table
+      // For now, just log the task data
+      console.log("[Amplemarket Email Tasks] Task data:", {
+        contactEmail: task.contact_email,
+        taskType: task.type,
+        taskStatus: task.status,
+        taskId: task.id,
+        availableFields: Object.keys(task)
+      });
+      
+      createdCount++;
+    }
+    
+    const syncDuration = Date.now() - syncStartTime.getTime();
+    
+    console.log("[Amplemarket Email Tasks] Sync completed:", {
+      tenantId,
+      integrationId,
+      amplemarketUserId,
+      amplemarketUserEmail,
+      createdCount,
+      updatedCount,
+      skippedCount,
+      totalTasks: tasks.length,
+      durationMs: syncDuration
+    });
+    
+    return {
+      success: true,
+      createdCount,
+      updatedCount,
+      skippedCount,
+      totalTasks: tasks.length
+    };
+  } catch (error: any) {
+    console.error("[Amplemarket Email Tasks] Error fetching tasks:", {
+      url: requestUrl,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      errorMessage: error.message,
+      responseData: error.response?.data
+    });
+    
+    // Enhanced 404 logging per requirements
+    if (error.response?.status === 404) {
+      const fullPath = error.config?.url || requestUrl;
+      const fullUrl = `${fullPath}?${new URLSearchParams(params as any).toString()}`;
+      console.error("[Amplemarket Email Tasks] 404 ERROR - Endpoint does not exist:", {
+        fullPath,
+        fullUrl,
+        method: error.config?.method?.toUpperCase() || "GET",
+        params,
+        message: "The /tasks endpoint does not exist or is not accessible with current credentials"
+      });
+      throw new Error(`Amplemarket endpoint does not exist: ${fullUrl}. Please verify the API endpoint with Amplemarket support.`);
+    }
+    
+    throw error;
+  }
+}

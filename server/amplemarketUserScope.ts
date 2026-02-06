@@ -127,3 +127,93 @@ export async function getAmplemarketUserScope(
 
   return result;
 }
+
+/**
+ * Get Amplemarket user_id by email address
+ * Per Amplemarket support: Some task endpoints require user_id parameter
+ * Use List Users endpoint first to retrieve user IDs
+ */
+export async function getUserIdByEmail(
+  apiKey: string,
+  userEmail: string
+): Promise<string> {
+  console.log("[Amplemarket User ID] Fetching user_id for email:", userEmail);
+
+  const headers = {
+    "Authorization": `Bearer ${apiKey}`,
+    "Content-Type": "application/json",
+  };
+
+  try {
+    const usersResponse = await axios.get(`${AMPLEMARKET_API_BASE}/users`, { headers });
+    
+    console.log("[Amplemarket User ID] Users response:", {
+      status: usersResponse.status,
+      responseKeys: Object.keys(usersResponse.data || {}),
+      usersCount: usersResponse.data?.users?.length || 0
+    });
+    
+    // Normalize API response - handle different response structures
+    let allUsers: any[];
+    if (Array.isArray(usersResponse.data)) {
+      allUsers = usersResponse.data;
+    } else if (usersResponse.data?.users && Array.isArray(usersResponse.data.users)) {
+      allUsers = usersResponse.data.users;
+    } else if (usersResponse.data?.data && Array.isArray(usersResponse.data.data)) {
+      allUsers = usersResponse.data.data;
+    } else {
+      console.error("[Amplemarket User ID] Unexpected users response format:", {
+        responseKeys: Object.keys(usersResponse.data || {}),
+        isArray: Array.isArray(usersResponse.data),
+        sample: JSON.stringify(usersResponse.data).substring(0, 200)
+      });
+      throw new Error("Failed to load users due to unexpected response format.");
+    }
+    
+    // Find user by email
+    const user = allUsers.find((u: any) => u.email === userEmail);
+    
+    if (!user) {
+      console.error("[Amplemarket User ID] User not found:", {
+        searchEmail: userEmail,
+        availableEmails: allUsers.map((u: any) => u.email)
+      });
+      throw new Error(`Amplemarket user not found with email: ${userEmail}`);
+    }
+    
+    if (!user.id) {
+      console.error("[Amplemarket User ID] User found but missing ID:", {
+        userEmail,
+        availableFields: Object.keys(user)
+      });
+      throw new Error(`Amplemarket user ${userEmail} is missing ID field`);
+    }
+    
+    console.log("[Amplemarket User ID] User ID found:", {
+      email: userEmail,
+      userId: user.id
+    });
+    
+    return user.id;
+  } catch (error: any) {
+    console.error("[Amplemarket User ID] Error fetching user ID:", {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      message: error.message,
+      responseData: error.response?.data
+    });
+    
+    // Enhanced 404 logging per requirements
+    if (error.response?.status === 404) {
+      const fullPath = error.config?.url || `${AMPLEMARKET_API_BASE}/users`;
+      console.error("[Amplemarket User ID] 404 ERROR - Endpoint does not exist:", {
+        fullPath,
+        method: error.config?.method?.toUpperCase() || "GET",
+        message: "The /users endpoint does not exist or is not accessible with current credentials"
+      });
+      throw new Error(`Amplemarket endpoint does not exist: ${fullPath}. Please verify the API endpoint with Amplemarket support.`);
+    }
+    
+    throw new Error(`Failed to fetch Amplemarket user ID: ${error.message}`);
+  }
+}

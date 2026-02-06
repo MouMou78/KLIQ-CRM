@@ -47,6 +47,32 @@ export class AmplemarketClient {
         return response;
       },
       (error) => {
+        // Enhanced 404 logging per Amplemarket support requirements
+        if (error.response?.status === 404) {
+          const fullPath = error.config?.url || "unknown";
+          const method = error.config?.method?.toUpperCase() || "GET";
+          const baseUrl = this.client.defaults.baseURL || "";
+          const absoluteUrl = fullPath.startsWith("http") ? fullPath : `${baseUrl}${fullPath}`;
+          
+          console.error("[Amplemarket API] 404 ERROR - Endpoint does not exist:", {
+            fullPath: absoluteUrl,
+            method,
+            statusText: error.response?.statusText,
+            responseBody: error.response?.data,
+            message: `The endpoint ${absoluteUrl} does not exist or is not accessible with current credentials`
+          });
+          
+          // Wrap error with clear message
+          const enhancedError = new Error(
+            `Amplemarket endpoint does not exist: ${method} ${absoluteUrl}. ` +
+            `Please verify the API endpoint with Amplemarket support. ` +
+            `Response: ${JSON.stringify(error.response?.data)}`
+          );
+          (enhancedError as any).originalError = error;
+          (enhancedError as any).status = 404;
+          return Promise.reject(enhancedError);
+        }
+        
         console.error("[Amplemarket API] Response Error:", {
           status: error.response?.status,
           statusText: error.response?.statusText,
@@ -99,6 +125,18 @@ export class AmplemarketClient {
     return response.data;
   }
 
+  /**
+   * Get tasks from Amplemarket (includes email tasks)
+   * @param params - Query parameters
+   * @param params.type - Task type filter (e.g., 'email')
+   * @param params.user_id - User ID to scope tasks to specific user
+   * @param params.limit - Maximum number of tasks to return
+   * @param params.offset - Pagination offset
+   */
+  async getTasks(params?: { type?: string; user_id?: string; limit?: number; offset?: number }) {
+    const response = await this.client.get("/tasks", { params });
+    return response.data;
+  }
 
 }
 
