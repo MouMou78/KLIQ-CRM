@@ -95,18 +95,41 @@ export function AmplemarketSync() {
               </div>
 
               {syncStatus.status === 'completed' && (
-                <div className="grid grid-cols-3 gap-4 pt-4 border-t">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Created</p>
-                    <p className="text-2xl font-bold text-green-600">{syncStatus.contactsCreated || 0}</p>
+                <div className="space-y-4 pt-4 border-t">
+                  {/* Fetch & Filter Counters */}
+                  <div className="grid grid-cols-4 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Fetched Total</p>
+                      <p className="text-2xl font-bold">{syncStatus.contactsFetched || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Matched Owner</p>
+                      <p className="text-2xl font-bold text-green-600">{syncStatus.contactsKept || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Wrong Owner</p>
+                      <p className="text-2xl font-bold text-gray-400">{syncStatus.contactsDiscarded || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Skipped</p>
+                      <p className="text-2xl font-bold text-orange-400">{syncStatus.contactsSkipped || 0}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Updated</p>
-                    <p className="text-2xl font-bold text-blue-600">{syncStatus.contactsUpdated || 0}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Conflicts</p>
-                    <p className="text-2xl font-bold text-orange-600">{syncStatus.conflictsDetected || 0}</p>
+                  
+                  {/* Create & Update Counters */}
+                  <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Created</p>
+                      <p className="text-2xl font-bold text-green-600">{syncStatus.contactsCreated || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Updated</p>
+                      <p className="text-2xl font-bold text-blue-600">{syncStatus.contactsUpdated || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Synced</p>
+                      <p className="text-2xl font-bold text-purple-600">{(syncStatus.contactsCreated || 0) + (syncStatus.contactsUpdated || 0)}</p>
+                    </div>
                   </div>
                 </div>
               )}

@@ -288,6 +288,13 @@
       "when": 1770389478185,
       "tag": "0040_cute_orphan",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "5",
+      "when": 1770398270251,
+      "tag": "0041_ambiguous_red_skull",
+      "breakpoints": true
     }
   ]
 }

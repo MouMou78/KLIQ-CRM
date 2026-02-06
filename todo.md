@@ -2344,3 +2344,25 @@
 - [ ] Verify lists render and are selectable (needs browser test)
 - [ ] Verify sequences render and are selectable (needs browser test)
 - [ ] Verify no JS type errors in console (needs browser test)
+
+## Fix Amplemarket Sync 0 Contacts Issue
+- [ ] Add mandatory sync counters (lists_selected, sequences_selected, contacts_fetched_total, etc.)
+- [ ] Log selected owner value at sync start (email and ID)
+- [ ] Prove owner field name by logging first 5 fetched contacts with all candidate fields
+- [ ] Normalize owner matching (case-insensitive, trimmed, email-only)
+- [ ] Verify correct dataset fetch based on selected lists/sequences
+- [ ] Ensure API endpoint returns owner field (or fetch it separately)
+- [ ] Run sync and verify non-zero contacts_fetched_total
+- [ ] Verify contacts_matching_selected_owner_count is non-zero
+- [ ] Deliver sync summary with all counters and sample records
+
+## Fix Amplemarket Sync 0 Contacts Issue - COMPLETED
+- [x] Add mandatory sync counters (lists_selected, sequences_selected, contacts_fetched_total, etc.)
+- [x] Log selected owner value at sync start (email and ID)
+- [x] Prove owner field name by logging first 5 fetched contacts with all candidate fields
+- [x] Normalize owner matching (case-insensitive, trimmed, email-only)
+- [x] Add contactsSkipped, contactsFetched, contactsKept, contactsDiscarded to database schema
+- [x] Update UI to display all sync counters (Fetch & Filter section + Create & Update section)
+- [ ] User needs to run sync from UI to generate diagnostic output
+- [ ] Review server logs to see fetched vs filtered counts
+- [ ] Verify owner field format from sample contacts

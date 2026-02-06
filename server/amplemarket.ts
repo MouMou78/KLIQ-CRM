@@ -94,7 +94,9 @@ export async function syncAmplemarketContacts(
     integrationId,
     amplemarketUserId,
     amplemarketUserEmail,
-    selectedListIds: selectedListIds.length
+    amplemarketUserEmailNormalized: amplemarketUserEmail.toLowerCase().trim(),
+    selectedListIds: selectedListIds.length,
+    selectedListIdsArray: selectedListIds
   });
   
   // Initialize sync counters
@@ -135,6 +137,27 @@ export async function syncAmplemarketContacts(
       const leadsList = response.data.leads || [];
       fetchedTotal += leadsList.length;
       
+      console.log(`[Amplemarket Sync] Fetched ${leadsList.length} leads from list ${listId}`);
+      
+      // Log first 5 contacts to prove owner field format
+      if (leadsList.length > 0) {
+        const sampleSize = Math.min(5, leadsList.length);
+        console.log(`[Amplemarket Sync] Sample of first ${sampleSize} contacts:`);
+        for (let i = 0; i < sampleSize; i++) {
+          const sample = leadsList[i];
+          console.log(`  Contact ${i + 1}:`, {
+            external_id: sample.id,
+            email: sample.email,
+            owner: sample.owner,
+            owner_email: sample.owner_email,
+            user_email: sample.user?.email,
+            assigned_to: sample.assigned_to,
+            created_by: sample.created_by,
+            availableFields: Object.keys(sample).filter(k => k.includes('owner') || k.includes('user') || k.includes('email'))
+          });
+        }
+      }
+      
       for (const lead of leadsList) {
         // Skip if no email
         if (!lead.email) {
@@ -152,13 +175,23 @@ export async function syncAmplemarketContacts(
           throw new Error(`Amplemarket lead ${lead.email} is missing owner field. Cannot determine ownership. Aborting sync.`);
         }
         
-        if (lead.owner !== amplemarketUserEmail) {
+        // Normalize owner matching: case-insensitive, trimmed, email-only
+        const normalizeEmail = (email: string) => email.toLowerCase().trim();
+        const leadOwnerNormalized = normalizeEmail(lead.owner);
+        const expectedOwnerNormalized = normalizeEmail(amplemarketUserEmail);
+        
+        if (leadOwnerNormalized !== expectedOwnerNormalized) {
           discardedOtherOwners++;
-          console.log("[Amplemarket Sync] Skipping lead - wrong owner:", {
-            leadEmail: lead.email,
-            leadOwner: lead.owner,
-            expectedOwner: amplemarketUserEmail
-          });
+          if (discardedOtherOwners <= 3) {
+            console.log("[Amplemarket Sync] Skipping lead - wrong owner:", {
+              leadEmail: lead.email,
+              leadOwner: lead.owner,
+              leadOwnerNormalized,
+              expectedOwner: amplemarketUserEmail,
+              expectedOwnerNormalized,
+              match: leadOwnerNormalized === expectedOwnerNormalized
+            });
+          }
           continue;
         }
         
