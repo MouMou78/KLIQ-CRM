@@ -2472,3 +2472,18 @@
 - [x] Add raw sample logging for contacts responses (first 3)
 - [ ] Run sync and identify which counter is zero
 - [ ] Fix the first failing stage
+
+## Fix Sync Observability and Zero-Contact Runs
+
+- [x] Verify all required counters are returned in sync API response
+- [ ] Verify counters are displayed in UI after sync completes
+- [x] Add 422 error for list_ids_scanned_count = 0
+- [x] Add 422 error for lead_ids_fetched_total = 0
+- [x] Add 422 error for contacts_hydrated_total = 0 while lead_ids_fetched_total > 0
+- [x] Add 422 error for kept_owner_match = 0 while contacts_with_owner_field_count > 0
+- [x] Add raw sample logging for /lead-lists/{id} response (1 item with id, email, owner fields)
+- [x] Add raw sample logging for hydration request (ids[] serialization, batch_size)
+- [x] Add raw sample logging for /contacts?ids[] response (1 contact with id, email, owner structure)
+- [x] Fix batch size to 20 max for /contacts?ids[] calls
+- [ ] Run sync and identify which counter is zero from UI
+- [ ] Fix the first zero counter based on diagnostic output

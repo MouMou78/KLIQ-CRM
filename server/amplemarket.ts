@@ -1,5 +1,6 @@
 import axios from "axios";
 import { nanoid } from "nanoid";
+import { TRPCError } from "@trpc/server";
 import { accounts, people, integrations, amplemarketSyncLogs } from "../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 
@@ -174,6 +175,9 @@ export async function syncAmplemarketContacts(
     const allLeadIds: string[] = [];
     let idsScannedTotal = 0;
     let listsScanned = 0;
+    let listPagesFetched = 0;
+    let leadItemsSeen = 0;
+    let batchesTotal = 0;
     
     // Fetch leads from each list and collect ALL IDs (no early filtering)
     for (const list of allLists) {
@@ -183,6 +187,9 @@ export async function syncAmplemarketContacts(
       try {
         const listDetailResponse = await client.getListById(list.id);
         const leads = listDetailResponse.leads || [];
+        
+        listPagesFetched++; // Count each list fetch as a page
+        leadItemsSeen += leads.length; // Count total lead items seen
         
         console.log(`[Amplemarket Sync] Fetched ${leads.length} leads from list`);
         idsScannedTotal += leads.length;
@@ -239,17 +246,28 @@ export async function syncAmplemarketContacts(
     if (uniqueLeadIds.length > 0) {
       console.log(`[Amplemarket Sync] Step 2: Hydrating ${uniqueLeadIds.length} contacts in batches...`);
       
-      const batchSize = 100; // Hydrate 100 contacts per request
+      const batchSize = 20; // Amplemarket requires max 20 IDs per /contacts request
       const batches = [];
       for (let i = 0; i < uniqueLeadIds.length; i += batchSize) {
         batches.push(uniqueLeadIds.slice(i, i + batchSize));
       }
       
-      console.log(`[Amplemarket Sync] Processing ${batches.length} batches of ${batchSize} contacts each`);
+      batchesTotal = batches.length;
+      console.log(`[Amplemarket Sync] Processing ${batchesTotal} batches of ${batchSize} contacts each`);
       
       for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
         const batch = batches[batchIndex];
         console.log(`[Amplemarket Sync] Hydrating batch ${batchIndex + 1}/${batches.length} (${batch.length} IDs)`);
+        
+        // Log hydration request sample for first batch
+        if (batchIndex === 0) {
+          console.log("[Amplemarket Sync] ===== HYDRATION REQUEST SAMPLE (batch 1) =====");
+          console.log(`Endpoint: GET /contacts`);
+          console.log(`Query param: ids=${batch.join(',')}`);
+          console.log(`Batch size: ${batch.length} (max 20)`);
+          console.log(`IDs serialization: comma-separated string`);
+          console.log("[Amplemarket Sync] ===== END HYDRATION REQUEST SAMPLE =====");
+        }
         
         try {
           // Call /contacts with ids parameter
@@ -495,10 +513,13 @@ export async function syncAmplemarketContacts(
       
       // Stage 1: ID Collection
       list_ids_scanned_count: listsScanned,
+      list_pages_fetched_total: listPagesFetched,
+      lead_items_seen_total: leadItemsSeen,
       lead_ids_fetched_total: idsScannedTotal,
       lead_ids_deduped_total: uniqueLeadIds.length,
       
       // Stage 2: Hydration
+      contacts_hydration_batches_total: batchesTotal,
       contacts_hydrated_total: fetchedTotal,
       
       // Stage 3: Owner Filtering
@@ -809,16 +830,89 @@ export async function syncAmplemarket(
         eq(integrations.provider, "amplemarket")
       ));
 
-    return {
-      accountsSynced: 0, // Accounts are derived from contacts
-      contactsCreated: syncResult.createdCount,
-      contactsUpdated: syncResult.updatedCount,
-      contactsSkipped: syncResult.skippedCount,
-      contactsFetched: syncResult.fetchedTotal,
-      contactsKept: syncResult.keptMatchingOwner,
-      contactsDiscarded: syncResult.discardedOtherOwners,
-      totalSynced: syncResult.createdCount + syncResult.updatedCount
+    // Enforce 422 errors for zero-contact conditions
+    const listsScanned = syncResult.list_ids_scanned_count || 0;
+    const leadIdsFetched = syncResult.lead_ids_fetched_total || 0;
+    const contactsHydrated = syncResult.contacts_hydrated_total || 0;
+    const contactsWithOwner = syncResult.contacts_with_owner_field_count || 0;
+    const keptOwnerMatch = syncResult.kept_owner_match || 0;
+    const created = syncResult.created || 0;
+    const updated = syncResult.updated || 0;
+    
+    // Build comprehensive response with all counters
+    const response = {
+      // Tracking
+      correlation_id: syncResult.correlationId,
+      tenant_id: tenantId,
+      integration_id: integrationId,
+      scope_mode: syncScope,
+      selected_owner_email: amplemarketUserEmail,
+      
+      // Stage 1: ID Collection
+      list_ids_scanned_count: listsScanned,
+      list_pages_fetched_total: syncResult.list_pages_fetched_total || 0,
+      lead_items_seen_total: syncResult.lead_items_seen_total || 0,
+      lead_ids_fetched_total: leadIdsFetched,
+      lead_ids_deduped_total: syncResult.lead_ids_deduped_total || 0,
+      
+      // Stage 2: Hydration
+      contacts_hydration_batches_total: syncResult.contacts_hydration_batches_total || 0,
+      contacts_hydrated_total: contactsHydrated,
+      
+      // Stage 3: Owner Filtering
+      contacts_with_owner_field_count: contactsWithOwner,
+      kept_owner_match: keptOwnerMatch,
+      discarded_owner_mismatch: syncResult.discarded_owner_mismatch || 0,
+      
+      // Stage 4: Upsert
+      created,
+      updated,
+      
+      // Legacy fields for backward compatibility
+      accountsSynced: 0,
+      contactsCreated: created,
+      contactsUpdated: updated,
+      contactsSkipped: syncResult.skippedCount || 0,
+      contactsFetched: leadIdsFetched,
+      contactsKept: keptOwnerMatch,
+      contactsDiscarded: syncResult.discarded_owner_mismatch || 0,
+      totalSynced: created + updated
     };
+    
+    // Enforce hard failure for zero-contact conditions
+    if (listsScanned === 0) {
+      throw new TRPCError({
+        code: 'UNPROCESSABLE_CONTENT',
+        message: 'No lists were scanned. Verify that lists exist and are accessible.',
+        cause: { ...response, reason: 'list_ids_scanned_count_zero' }
+      });
+    }
+    
+    if (leadIdsFetched === 0) {
+      throw new TRPCError({
+        code: 'UNPROCESSABLE_CONTENT',
+        message: 'No lead IDs were fetched from lists. Lists may be empty or pagination is broken.',
+        cause: { ...response, reason: 'lead_ids_fetched_total_zero' }
+      });
+    }
+    
+    if (contactsHydrated === 0 && leadIdsFetched > 0) {
+      throw new TRPCError({
+        code: 'UNPROCESSABLE_CONTENT',
+        message: `/contacts hydration returned 0 contacts despite ${leadIdsFetched} IDs. Check batch size (must be 20 max) and ids[] serialization.`,
+        cause: { ...response, reason: 'contacts_hydrated_total_zero' }
+      });
+    }
+    
+    if (keptOwnerMatch === 0 && contactsWithOwner > 0) {
+      throw new TRPCError({
+        code: 'UNPROCESSABLE_CONTENT',
+        message: `Owner mismatch: ${contactsWithOwner} contacts have owner field but none match "${amplemarketUserEmail}". Check owner field extraction and normalization.`,
+        cause: { ...response, reason: 'kept_owner_match_zero' }
+      });
+    }
+    
+    return response;
   } catch (error: any) {
     // Update sync log with error
     await db
