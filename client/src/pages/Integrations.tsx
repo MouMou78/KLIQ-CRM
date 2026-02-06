@@ -53,6 +53,16 @@ export default function Integrations() {
     },
   });
 
+  const syncAmplemarket = trpc.integrations.syncAmplemarket.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Synced ${data.totalSynced} items (${data.accountsSynced} accounts, ${data.contactsSynced} contacts)`);
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Failed to sync Amplemarket: ${error.message}`);
+    },
+  });
+
   const handleConnectAmplemarket = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!amplemarketKey.trim()) return;
@@ -206,9 +216,29 @@ export default function Integrations() {
                   <div className="space-y-3">
                     <div className="p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
                       <p className="text-sm text-green-800 dark:text-green-200">
-                        Amplemarket is connected and syncing data.
+                        Amplemarket is connected.
+                        {amplemarketIntegration.lastSyncedAt && (
+                          <span className="block mt-1 text-xs">
+                            Last synced: {new Date(amplemarketIntegration.lastSyncedAt).toLocaleString()}
+                          </span>
+                        )}
                       </p>
                     </div>
+                    <Button 
+                      className="w-full" 
+                      variant="default"
+                      onClick={() => syncAmplemarket.mutate()}
+                      disabled={syncAmplemarket.isPending}
+                    >
+                      {syncAmplemarket.isPending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Syncing...
+                        </>
+                      ) : (
+                        "Sync Now"
+                      )}
+                    </Button>
                     <div className="grid grid-cols-2 gap-2">
                       <Button variant="outline" asChild className="w-full">
                         <a href="/amplemarket/accounts">View Accounts</a>

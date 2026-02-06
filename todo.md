@@ -2057,3 +2057,8 @@
 - [x] Integrate email sending with sequences using connected email accounts
 - [x] Add email account selection to sequence settings
 - [x] Test email sending through connected accounts
+
+## Amplemarket Integration Bug
+- [x] Debug why Amplemarket data isn't flowing in after API key connection
+- [x] Check API connection and data sync functionality
+- [x] Verify data mapping and storage
