@@ -834,15 +834,16 @@ export async function syncAmplemarket(
   });
 
   try {
-    const syncResult = await syncAmplemarketContacts(
+    // Use new simplified sync that processes leads directly
+    const { syncAmplemarketFromLeads } = await import('./amplemarketSyncFromLeads');
+    const syncResult = await syncAmplemarketFromLeads(
       db,
       tenantId,
       integrationId,
       apiKey,
-      amplemarketUserId,
       amplemarketUserEmail,
-      syncScope,
-      selectedListIds
+      selectedListIds,
+      syncScope
     );
 
     // Update sync log with results
@@ -852,29 +853,24 @@ export async function syncAmplemarket(
         status: "completed",
         completedAt: new Date(),
         
-        // Legacy fields
-        contactsCreated: syncResult.createdCount,
-        contactsUpdated: syncResult.updatedCount,
-        contactsSkipped: syncResult.skippedCount,
-        contactsFetched: syncResult.fetchedTotal,
-        contactsKept: syncResult.keptMatchingOwner,
-        contactsDiscarded: syncResult.discardedOtherOwners,
-        missingOwnerField: syncResult.missingOwnerField || 0,
-        diagnosticMessage: syncResult.diagnosticMessage || null,
+        // Sync results from new lead-based sync
+        contactsCreated: syncResult.contacts_created,
+        contactsUpdated: syncResult.contacts_updated,
+        contactsSkipped: syncResult.leads_skipped,
+        contactsFetched: syncResult.leads_processed_total,
+        contactsKept: syncResult.leads_matching_owner,
+        contactsDiscarded: syncResult.leads_wrong_owner,
         
-        // New diagnostic counters
+        // Diagnostic counters
         correlationId: syncResult.correlationId,
-        listIdsScannedCount: syncResult.list_ids_scanned_count || 0,
-        leadIdsFetchedTotal: syncResult.lead_ids_fetched_total || 0,
-        leadIdsDedupedTotal: syncResult.lead_ids_deduped_total || 0,
-        contactsHydratedTotal: syncResult.contacts_hydrated_total || 0,
-        contactsWithOwnerFieldCount: syncResult.contacts_with_owner_field_count || 0,
-        keptOwnerMatch: syncResult.kept_owner_match || 0,
-        discardedOwnerMismatch: syncResult.discarded_owner_mismatch || 0,
-        created: syncResult.created || 0,
-        updated: syncResult.updated || 0,
-        skipped: syncResult.skipped || 0,
-        reason: syncResult.reason || null,
+        listIdsScannedCount: syncResult.lists_scanned,
+        leadIdsFetchedTotal: syncResult.leads_processed_total,
+        contactsWithOwnerFieldCount: syncResult.leads_with_owner_field,
+        keptOwnerMatch: syncResult.leads_matching_owner,
+        discardedOwnerMismatch: syncResult.leads_wrong_owner,
+        created: syncResult.contacts_created,
+        updated: syncResult.contacts_updated,
+        skipped: syncResult.leads_skipped,
       })
       .where(eq(amplemarketSyncLogs.id, syncLogId));
 
@@ -888,13 +884,12 @@ export async function syncAmplemarket(
       ));
 
     // Enforce 422 errors for zero-contact conditions
-    const listsScanned = syncResult.list_ids_scanned_count || 0;
-    const leadIdsFetched = syncResult.lead_ids_fetched_total || 0;
-    const contactsHydrated = syncResult.contacts_hydrated_total || 0;
-    const contactsWithOwner = syncResult.contacts_with_owner_field_count || 0;
-    const keptOwnerMatch = syncResult.kept_owner_match || 0;
-    const created = syncResult.created || 0;
-    const updated = syncResult.updated || 0;
+    const listsScanned = syncResult.lists_scanned || 0;
+    const leadsProcessed = syncResult.leads_processed_total || 0;
+    const leadsWithOwner = syncResult.leads_with_owner_field || 0;
+    const leadsMatchingOwner = syncResult.leads_matching_owner || 0;
+    const created = syncResult.contacts_created || 0;
+    const updated = syncResult.contacts_updated || 0;
     
     // Build comprehensive response with all counters
     const response = {
@@ -905,34 +900,28 @@ export async function syncAmplemarket(
       scope_mode: syncScope,
       selected_owner_email: amplemarketUserEmail,
       
-      // Stage 1: ID Collection
-      list_ids_scanned_count: listsScanned,
-      list_pages_fetched_total: syncResult.list_pages_fetched_total || 0,
-      lead_items_seen_total: syncResult.lead_items_seen_total || 0,
-      lead_ids_fetched_total: leadIdsFetched,
-      lead_ids_deduped_total: syncResult.lead_ids_deduped_total || 0,
+      // Stage 1: Lead Processing
+      lists_scanned: listsScanned,
+      leads_processed_total: leadsProcessed,
+      leads_with_owner_field: leadsWithOwner,
       
-      // Stage 2: Hydration
-      contacts_hydration_batches_total: syncResult.contacts_hydration_batches_total || 0,
-      contacts_hydrated_total: contactsHydrated,
+      // Stage 2: Owner Filtering
+      leads_matching_owner: leadsMatchingOwner,
+      leads_wrong_owner: syncResult.leads_wrong_owner || 0,
       
-      // Stage 3: Owner Filtering
-      contacts_with_owner_field_count: contactsWithOwner,
-      kept_owner_match: keptOwnerMatch,
-      discarded_owner_mismatch: syncResult.discarded_owner_mismatch || 0,
-      
-      // Stage 4: Upsert
-      created,
-      updated,
+      // Stage 3: Upsert
+      contacts_created: created,
+      contacts_updated: updated,
+      leads_skipped: syncResult.leads_skipped || 0,
       
       // Legacy fields for backward compatibility
       accountsSynced: 0,
       contactsCreated: created,
       contactsUpdated: updated,
-      contactsSkipped: syncResult.skippedCount || 0,
-      contactsFetched: leadIdsFetched,
-      contactsKept: keptOwnerMatch,
-      contactsDiscarded: syncResult.discarded_owner_mismatch || 0,
+      contactsSkipped: syncResult.leads_skipped || 0,
+      contactsFetched: leadsProcessed,
+      contactsKept: leadsMatchingOwner,
+      contactsDiscarded: syncResult.leads_wrong_owner || 0,
       totalSynced: created + updated
     };
     
@@ -941,31 +930,23 @@ export async function syncAmplemarket(
       throw new TRPCError({
         code: 'UNPROCESSABLE_CONTENT',
         message: 'No lists were scanned. Verify that lists exist and are accessible.',
-        cause: { ...response, reason: 'list_ids_scanned_count_zero' }
+        cause: { ...response, reason: 'lists_scanned_zero' }
       });
     }
     
-    if (leadIdsFetched === 0) {
+    if (leadsProcessed === 0) {
       throw new TRPCError({
         code: 'UNPROCESSABLE_CONTENT',
-        message: 'No lead IDs were fetched from lists. Lists may be empty or pagination is broken.',
-        cause: { ...response, reason: 'lead_ids_fetched_total_zero' }
+        message: 'No leads were processed from lists. Lists may be empty.',
+        cause: { ...response, reason: 'leads_processed_total_zero' }
       });
     }
     
-    if (contactsHydrated === 0 && leadIdsFetched > 0) {
+    if (leadsMatchingOwner === 0 && leadsWithOwner > 0) {
       throw new TRPCError({
         code: 'UNPROCESSABLE_CONTENT',
-        message: `/contacts hydration returned 0 contacts despite ${leadIdsFetched} IDs. Check batch size (must be 20 max) and ids[] serialization.`,
-        cause: { ...response, reason: 'contacts_hydrated_total_zero' }
-      });
-    }
-    
-    if (keptOwnerMatch === 0 && contactsWithOwner > 0) {
-      throw new TRPCError({
-        code: 'UNPROCESSABLE_CONTENT',
-        message: `Owner mismatch: ${contactsWithOwner} contacts have owner field but none match "${amplemarketUserEmail}". Check owner field extraction and normalization.`,
-        cause: { ...response, reason: 'kept_owner_match_zero' }
+        message: `Owner mismatch: ${leadsWithOwner} leads have owner field but none match "${amplemarketUserEmail}". Check owner field extraction and normalization.`,
+        cause: { ...response, reason: 'leads_matching_owner_zero' }
       });
     }
     

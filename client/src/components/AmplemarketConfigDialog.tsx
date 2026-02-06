@@ -175,13 +175,13 @@ export function AmplemarketConfigDialog({ open, onOpenChange, currentConfig, onS
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all_user_contacts">All contacts for selected user (recommended)</SelectItem>
+                <SelectItem value="all_user_contacts">All leads for selected user (recommended)</SelectItem>
                 <SelectItem value="lists">Specific lists</SelectItem>
                 <SelectItem value="sequences">Specific sequences</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              <strong>Note:</strong> "All contacts for user" is limited to contacts present in lists. Contacts not in any list will not be synced.
+              <strong>Note:</strong> Amplemarket does not expose a contact API for all leads. Contacts are synced from lead data in lists.
             </p>
           </div>
 
@@ -219,7 +219,7 @@ export function AmplemarketConfigDialog({ open, onOpenChange, currentConfig, onS
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              How to handle contacts that exist in both systems with different data
+              How to handle leads that exist in both systems with different data
             </p>
           </div>
 
@@ -265,7 +265,7 @@ export function AmplemarketConfigDialog({ open, onOpenChange, currentConfig, onS
                           {list.name}
                           {list.shared && <span className="text-xs text-muted-foreground ml-1">(Shared)</span>}
                           <span className="text-xs text-muted-foreground ml-1">
-                            {countMap.has(list.id) ? `(${countMap.get(list.id)} contacts)` : '(count unavailable)'}
+                            {countMap.has(list.id) ? `(${countMap.get(list.id)} leads)` : '(count unavailable)'}
                           </span>
                         </label>
                       </div>
@@ -291,7 +291,7 @@ export function AmplemarketConfigDialog({ open, onOpenChange, currentConfig, onS
               </div>
             )}
             <p className="text-xs text-muted-foreground">
-              Select at least one list to sync contacts from
+              Select at least one list to sync leads from
             </p>
           </div>
           )}
@@ -348,7 +348,7 @@ export function AmplemarketConfigDialog({ open, onOpenChange, currentConfig, onS
               </div>
             )}
             <p className="text-xs text-muted-foreground">
-              Select at least one sequence to sync contacts from
+              Select at least one sequence to sync leads from
             </p>
           </div>
           )}

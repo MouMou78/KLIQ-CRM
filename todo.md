@@ -2302,7 +2302,7 @@
 - [ ] Fix allLists.filter type error with proper response normalization (Array.isArray check)
 - [ ] Update error messages to not blame API key for client-side type errors
 - [ ] Remove false assumption about list/sequence user ownership from UI
-- [ ] Update UI copy to reflect owner-based scoping at contact level
+- [x] Update UI copy to reflect owner-based scoping at contact level
 - [ ] Implement server-side contact filtering by contact.owner email
 - [ ] Fail sync if owner field missing in API payload
 - [ ] Add read scoping to filter contacts by amplemarket_user_email
@@ -2504,3 +2504,12 @@
 - [ ] Update ID collection logic to extract correct contact ID field instead of blindly using item.id
 - [ ] Add guardrail to fail if contact ID field is missing from lead items
 - [ ] Run sync and verify hydration returns non-zero contacts with correct IDs
+
+## Remove /contacts Hydration - Sync Directly from Leads
+
+- [x] Remove all /contacts hydration code (batching, ID probing, hydration calls)
+- [x] Create contacts directly from lead-lists payloads with field mapping (email, name, company, title, owner)
+- [x] Add source attribution: source=amplemarket, source_type=lead, amplemarket_lead_id=lead.id
+- [x] Update UI copy: "Amplemarket leads" + document API limitation
+- [x] Add guardrail preventing future /contacts hydration attempts
+- [x] Test sync and verify non-zero imports with owner filtering working
