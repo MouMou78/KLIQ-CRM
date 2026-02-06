@@ -2180,3 +2180,10 @@
 - [ ] Make trivial code change to trigger new deployment with updated credentials
 - [ ] Verify Google OAuth credentials are applied in production
 - [ ] Verify Amplemarket API authentication (401 error suggests wrong API key)
+
+## Google OAuth Redirect URI Fix (Feb 6)
+- [ ] Add GOOGLE_OAUTH_REDIRECT_URI environment variable
+- [ ] Set Express trust proxy to handle HTTPS behind load balancers
+- [ ] Update Google OAuth routes to use hardcoded redirect_uri
+- [ ] Add logging to show exact redirect_uri being sent
+- [ ] Verify redirect_uri matches registered Google Cloud URIs

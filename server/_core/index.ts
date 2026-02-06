@@ -32,6 +32,8 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+  // Trust proxy to handle HTTPS behind load balancers
+  app.set('trust proxy', 1);
   // Configure cookie parser for session management
   app.use(cookieParser());
   // Configure body parser with larger size limit for file uploads

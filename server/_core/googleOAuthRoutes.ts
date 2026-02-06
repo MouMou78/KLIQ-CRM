@@ -48,10 +48,9 @@ export function registerGoogleOAuthRoutes(app: Express) {
       
       console.log(`[Google OAuth Start] Generated state: ${state}, stored tenantId: ${tenantId}`);
 
-      // Determine redirect URI based on current host
-      const protocol = req.protocol;
-      const host = req.get("host");
-      const redirectUri = `${protocol}://${host}/api/oauth/google/callback`;
+      // Use hardcoded redirect URI from environment variable
+      const redirectUri = process.env.GOOGLE_OAUTH_REDIRECT_URI || "https://1twentyinternal.com/api/oauth/google/callback";
+      console.log(`[Google OAuth Start] Using redirect_uri: ${redirectUri}`);
 
       // Generate Google authorization URL
       const authUrl = getGoogleAuthUrl(redirectUri, state);
@@ -100,10 +99,9 @@ export function registerGoogleOAuthRoutes(app: Express) {
       const { tenantId } = stateData;
       console.log(`[Google OAuth Callback] Restored tenantId from state: ${tenantId}`);
 
-      // Determine redirect URI (must match the one used in authorization request)
-      const protocol = req.protocol;
-      const host = req.get("host");
-      const redirectUri = `${protocol}://${host}/api/oauth/google/callback`;
+      // Use hardcoded redirect URI (must match the one used in authorization request)
+      const redirectUri = process.env.GOOGLE_OAUTH_REDIRECT_URI || "https://1twentyinternal.com/api/oauth/google/callback";
+      console.log(`[Google OAuth Callback] Using redirect_uri: ${redirectUri}`);
 
       // Exchange authorization code for tokens
       const tokens = await exchangeCodeForTokens(code, redirectUri);
