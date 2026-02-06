@@ -2392,3 +2392,13 @@
 - [x] Remove hard block that refuses sync when no lists selected
 - [ ] Test: Sync with "All contacts for selected user" without selecting lists
 - [ ] Test: Untick lists/sequences and save config
+
+## Implement all_user_contacts Sync Mode
+- [x] Add paginated contacts/prospects fetch endpoint to Amplemarket client
+- [x] Implement owner field extraction (string vs object.email)
+- [x] Implement owner normalization (trim + lowercase)
+- [x] Create all_user_contacts sync path with owner filtering
+- [x] Add counters: fetched_total, missing_owner_field, kept_owner_match, discarded_owner_mismatch
+- [x] Add diagnostic message when kept_owner_match=0 but fetched_total>0
+- [ ] Test sync with ianm@1twentyconsultancy.com without selecting lists
+- [ ] Verify non-zero fetched_total and kept_owner_match in sync summary

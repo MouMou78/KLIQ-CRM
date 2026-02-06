@@ -302,6 +302,13 @@
       "when": 1770398835565,
       "tag": "0042_ordinary_starbolt",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "5",
+      "when": 1770399780921,
+      "tag": "0043_luxuriant_black_crow",
+      "breakpoints": true
     }
   ]
 }

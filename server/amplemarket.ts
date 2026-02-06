@@ -115,14 +115,216 @@ export async function syncAmplemarketContacts(
     throw new Error("No lists selected for sync. Please select at least one list or switch scope to 'All contacts for selected user'.");
   }
   
-  // For all_user_contacts mode, we'll fetch all contacts and filter by owner
+  // Helper function to extract and normalize owner email
+  const extractOwnerEmail = (record: any): string | null => {
+    if (!record.owner) return null;
+    if (typeof record.owner === 'string') return record.owner;
+    if (typeof record.owner === 'object' && record.owner.email) return record.owner.email;
+    return null;
+  };
+  
+  const normalizeEmail = (email: string | null): string | null => {
+    if (!email) return null;
+    return email.toLowerCase().trim();
+  };
+  
+  const normalizedSelectedEmail = normalizeEmail(amplemarketUserEmail);
+  
+  // Counter for all_user_contacts mode
+  let missingOwnerField = 0;
+  
+  // For all_user_contacts mode, fetch all contacts with pagination
   if (syncScope === 'all_user_contacts') {
-    // TODO: Implement workspace-wide contact fetch with owner filtering
-    // For now, we'll use the existing list-based approach as fallback
-    console.warn("[Amplemarket Sync] all_user_contacts mode not yet implemented, falling back to list-based sync");
-    if (selectedListIds.length === 0) {
-      throw new Error("all_user_contacts sync mode is not yet implemented. Please select specific lists for now.");
+    console.log("[Amplemarket Sync] Using all_user_contacts mode - fetching all contacts with owner filtering");
+    
+    const { createAmplemarketClient } = await import('./amplemarketClient');
+    const client = createAmplemarketClient(apiKey);
+    
+    let offset = 0;
+    const limit = 100; // Fetch 100 contacts per page
+    let hasMore = true;
+    
+    while (hasMore) {
+      console.log(`[Amplemarket Sync] Fetching contacts page: offset=${offset}, limit=${limit}`);
+      
+      try {
+        const response = await client.getContacts({ limit, offset });
+        const contacts = response.contacts || [];
+        
+        console.log(`[Amplemarket Sync] Fetched ${contacts.length} contacts from page`);
+        
+        if (contacts.length === 0) {
+          hasMore = false;
+          break;
+        }
+        
+        fetchedTotal += contacts.length;
+        
+        // Log first 5 contacts from first page to prove owner field format
+        if (offset === 0 && contacts.length > 0) {
+          const sampleSize = Math.min(5, contacts.length);
+          console.log(`[Amplemarket Sync] Sample of first ${sampleSize} contacts:`);
+          for (let i = 0; i < sampleSize; i++) {
+            const sample = contacts[i];
+            const ownerEmail = extractOwnerEmail(sample);
+            console.log(`  Contact ${i + 1}:`, {
+              external_id: sample.id,
+              email: sample.email,
+              owner_raw: sample.owner,
+              owner_extracted: ownerEmail,
+              owner_normalized: normalizeEmail(ownerEmail),
+              availableFields: Object.keys(sample).filter(k => k.includes('owner') || k.includes('user') || k.includes('email'))
+            });
+          }
+        }
+        
+        // Process each contact with owner filtering
+        for (const contact of contacts) {
+          // Skip if no email
+          if (!contact.email) {
+            skippedCount++;
+            continue;
+          }
+          
+          // Extract and normalize owner email
+          const contactOwnerEmail = extractOwnerEmail(contact);
+          const normalizedContactOwner = normalizeEmail(contactOwnerEmail);
+          
+          if (!contactOwnerEmail) {
+            missingOwnerField++;
+            discardedOtherOwners++;
+            continue;
+          }
+          
+          // Filter by owner - only keep contacts matching selected user
+          if (normalizedContactOwner !== normalizedSelectedEmail) {
+            discardedOtherOwners++;
+            continue;
+          }
+          
+          keptMatchingOwner++;
+          
+          // Check if person already exists by email
+          const [existingPerson] = await db
+            .select()
+            .from(people)
+            .where(and(
+              eq(people.tenantId, tenantId),
+              eq(people.primaryEmail, contact.email)
+            ))
+            .limit(1);
+
+          // Create or update account from contact company data
+          const accountId = await syncAccountFromContact(db, tenantId, contact);
+
+          const personData = {
+            accountId,
+            fullName: `${contact.first_name || ""} ${contact.last_name || ""}`.trim() || contact.email,
+            firstName: contact.first_name,
+            lastName: contact.last_name,
+            primaryEmail: contact.email,
+            companyName: contact.company_name,
+            companyDomain: contact.company_domain,
+            companySize: null,
+            roleTitle: contact.title,
+            simplifiedTitle: null,
+            phone: contact.phone_numbers?.[0]?.number || null,
+            manuallyAddedNumber: null,
+            manuallyAddedNumberDncStatus: null,
+            sourcedNumber: null,
+            sourcedNumberDncStatus: null,
+            mobileNumber: null,
+            mobileNumberDncStatus: null,
+            workNumber: null,
+            workNumberDncStatus: null,
+            city: null,
+            state: null,
+            country: null,
+            location: null,
+            linkedinUrl: contact.linkedin_url,
+            industry: contact.industry,
+            status: null,
+            numberOfOpens: 0,
+            label: null,
+            meetingBooked: false,
+            owner: null,
+            sequenceName: null,
+            sequenceTemplateName: null,
+            savedSearchOrLeadListName: null,
+            mailbox: null,
+            contactUrl: null,
+            replied: false,
+            lastStageExecuted: null,
+            lastStageExecutedAt: null,
+            notes: null,
+            enrichmentSource: "amplemarket",
+            enrichmentSnapshot: contact,
+            enrichmentLastSyncedAt: new Date(),
+            integrationId,
+            amplemarketUserId,
+            amplemarketExternalId: contact.id || contact.email,
+            updatedAt: new Date(),
+          };
+
+          if (existingPerson) {
+            // Update existing person
+            await db
+              .update(people)
+              .set(personData)
+              .where(eq(people.id, existingPerson.id));
+            updatedCount++;
+          } else {
+            // Create new person
+            await db.insert(people).values({
+              id: nanoid(),
+              tenantId,
+              ...personData,
+              createdAt: new Date(),
+            });
+            createdCount++;
+          }
+        }
+        
+        offset += contacts.length;
+        
+        // If we got fewer contacts than limit, we've reached the end
+        if (contacts.length < limit) {
+          hasMore = false;
+        }
+      } catch (error: any) {
+        console.error(`[Amplemarket Sync] Error fetching contacts page at offset ${offset}:`, error.message);
+        throw error;
+      }
     }
+    
+    console.log("[Amplemarket Sync] all_user_contacts mode complete:", {
+      fetchedTotal,
+      missingOwnerField,
+      keptMatchingOwner,
+      discardedOtherOwners,
+      createdCount,
+      updatedCount,
+      skippedCount
+    });
+    
+    // Diagnostic message if no contacts matched owner
+    let diagnosticMessage = undefined;
+    if (keptMatchingOwner === 0 && fetchedTotal > 0) {
+      diagnosticMessage = `Owner field not present on fetched endpoint or owner mismatch. Fetched ${fetchedTotal} contacts but none matched owner ${amplemarketUserEmail}. Missing owner field on ${missingOwnerField} contacts. Check which endpoint is used and whether it returns owner.`;
+      console.warn("[Amplemarket Sync] DIAGNOSTIC:", diagnosticMessage);
+    }
+    
+    // Return early for all_user_contacts mode
+    return { 
+      createdCount, 
+      updatedCount, 
+      skippedCount,
+      fetchedTotal,
+      keptMatchingOwner,
+      discardedOtherOwners,
+      missingOwnerField,
+      diagnosticMessage
+    };
   }
   
   // Fetch contacts from each selected list
@@ -378,6 +580,8 @@ export async function syncAmplemarket(
         contactsFetched: syncResult.fetchedTotal,
         contactsKept: syncResult.keptMatchingOwner,
         contactsDiscarded: syncResult.discardedOtherOwners,
+        missingOwnerField: syncResult.missingOwnerField || 0,
+        diagnosticMessage: syncResult.diagnosticMessage || null,
       })
       .where(eq(amplemarketSyncLogs.id, syncLogId));
 

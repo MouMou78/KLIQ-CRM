@@ -1398,9 +1398,11 @@ export const amplemarketSyncLogs = mysqlTable("amplemarketSyncLogs", {
   contactsFetched: int("contactsFetched").default(0),
   contactsKept: int("contactsKept").default(0),
   contactsDiscarded: int("contactsDiscarded").default(0),
+  missingOwnerField: int("missingOwnerField").default(0),
   conflictsDetected: int("conflictsDetected").default(0),
   errors: json("errors").$type<string[]>(),
   errorMessage: text("errorMessage"),
+  diagnosticMessage: text("diagnosticMessage"),
   metadata: json("metadata").$type<Record<string, any>>(), // Additional sync details
   triggeredBy: varchar("triggeredBy", { length: 36 }), // User ID who triggered manual sync
   createdAt: timestamp("createdAt").defaultNow().notNull(),

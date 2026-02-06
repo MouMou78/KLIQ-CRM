@@ -97,7 +97,7 @@ export function AmplemarketSync() {
               {syncStatus.status === 'completed' && (
                 <div className="space-y-4 pt-4 border-t">
                   {/* Fetch & Filter Counters */}
-                  <div className="grid grid-cols-4 gap-4">
+                  <div className="grid grid-cols-5 gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground">Fetched Total</p>
                       <p className="text-2xl font-bold">{syncStatus.contactsFetched || 0}</p>
@@ -109,6 +109,10 @@ export function AmplemarketSync() {
                     <div>
                       <p className="text-sm text-muted-foreground">Wrong Owner</p>
                       <p className="text-2xl font-bold text-gray-400">{syncStatus.contactsDiscarded || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Missing Owner</p>
+                      <p className="text-2xl font-bold text-red-400">{syncStatus.missingOwnerField || 0}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Skipped</p>
@@ -138,6 +142,13 @@ export function AmplemarketSync() {
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{syncStatus.errorMessage}</AlertDescription>
+                </Alert>
+              )}
+              
+              {syncStatus.diagnosticMessage && (
+                <Alert variant="default" className="bg-yellow-50 border-yellow-200">
+                  <AlertCircle className="h-4 w-4 text-yellow-600" />
+                  <AlertDescription className="text-yellow-800">{syncStatus.diagnosticMessage}</AlertDescription>
                 </Alert>
               )}
             </div>
