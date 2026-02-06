@@ -148,11 +148,13 @@ export async function syncAmplemarketContacts(
     const allLists = listsResponse.lead_lists || [];
     console.log(`[Amplemarket Sync] Found ${allLists.length} lead lists`);
     
-    const matchingLeadIds: string[] = [];
+    const allLeadIds: string[] = [];
     let idsScannedTotal = 0;
+    let listsScanned = 0;
     
-    // Fetch leads from each list and filter by owner
+    // Fetch leads from each list and collect ALL IDs (no early filtering)
     for (const list of allLists) {
+      listsScanned++;
       console.log(`[Amplemarket Sync] Fetching leads from list: ${list.name} (${list.id})`);
       
       try {
@@ -162,49 +164,11 @@ export async function syncAmplemarketContacts(
         console.log(`[Amplemarket Sync] Fetched ${leads.length} leads from list`);
         idsScannedTotal += leads.length;
         
-        // Log first 5 leads from first list to prove owner field format
-        if (matchingLeadIds.length === 0 && leads.length > 0) {
-          const sampleSize = Math.min(5, leads.length);
-          console.log(`[Amplemarket Sync] Sample of first ${sampleSize} leads:`);
-          for (let i = 0; i < sampleSize; i++) {
-            const sample = leads[i];
-            const ownerEmail = extractOwnerEmail(sample);
-            console.log(`  Lead ${i + 1}:`, {
-              external_id: sample.id,
-              email: sample.email,
-              owner_raw: sample.owner,
-              owner_extracted: ownerEmail,
-              owner_normalized: normalizeEmail(ownerEmail),
-              availableFields: Object.keys(sample).filter(k => k.includes('owner') || k.includes('user') || k.includes('email'))
-            });
-          }
-        }
-        
-        // Filter leads by owner and collect matching IDs
+        // Collect ALL lead IDs without filtering (owner filtering happens after hydration)
         for (const lead of leads) {
-          // Skip if no ID
-          if (!lead.id) {
-            continue;
+          if (lead.id) {
+            allLeadIds.push(lead.id);
           }
-          
-          // Extract and normalize owner email
-          const leadOwnerEmail = extractOwnerEmail(lead);
-          const normalizedLeadOwner = normalizeEmail(leadOwnerEmail);
-          
-          if (!leadOwnerEmail) {
-            missingOwnerField++;
-            discardedOtherOwners++;
-            continue;
-          }
-          
-          // Filter by owner - only keep leads matching selected user
-          if (normalizedLeadOwner !== normalizedSelectedEmail) {
-            discardedOtherOwners++;
-            continue;
-          }
-          
-          // This lead matches the owner - collect its ID
-          matchingLeadIds.push(lead.id);
         }
       } catch (error: any) {
         console.error(`[Amplemarket Sync] Error fetching list ${list.id}:`, error.message);
@@ -212,18 +176,26 @@ export async function syncAmplemarketContacts(
       }
     }
     
-    console.log(`[Amplemarket Sync] Step 1 complete: Scanned ${idsScannedTotal} leads, found ${matchingLeadIds.length} matching owner`);
-    fetchedTotal = idsScannedTotal;
-    keptMatchingOwner = matchingLeadIds.length;
+    // Deduplicate IDs across lists
+    const uniqueLeadIds = Array.from(new Set(allLeadIds));
+    const duplicatesRemoved = allLeadIds.length - uniqueLeadIds.length;
+    
+    console.log(`[Amplemarket Sync] Step 1 complete:`, {
+      lists_scanned: listsScanned,
+      ids_fetched_total: idsScannedTotal,
+      ids_collected_raw: allLeadIds.length,
+      ids_deduped_total: uniqueLeadIds.length,
+      duplicates_removed: duplicatesRemoved
+    });
     
     // Step 2: Hydrate full contact details in batches
-    if (matchingLeadIds.length > 0) {
-      console.log(`[Amplemarket Sync] Step 2: Hydrating ${matchingLeadIds.length} contacts in batches...`);
+    if (uniqueLeadIds.length > 0) {
+      console.log(`[Amplemarket Sync] Step 2: Hydrating ${uniqueLeadIds.length} contacts in batches...`);
       
       const batchSize = 100; // Hydrate 100 contacts per request
       const batches = [];
-      for (let i = 0; i < matchingLeadIds.length; i += batchSize) {
-        batches.push(matchingLeadIds.slice(i, i + batchSize));
+      for (let i = 0; i < uniqueLeadIds.length; i += batchSize) {
+        batches.push(uniqueLeadIds.slice(i, i + batchSize));
       }
       
       console.log(`[Amplemarket Sync] Processing ${batches.length} batches of ${batchSize} contacts each`);
@@ -241,8 +213,28 @@ export async function syncAmplemarketContacts(
           
           const contacts = contactsResponse.data.contacts || [];
           console.log(`[Amplemarket Sync] Hydrated ${contacts.length} contacts from batch`);
+          fetchedTotal += contacts.length;
           
-          // Process each hydrated contact
+          // Log first 5 contacts from first batch to prove owner field format
+          if (batchIndex === 0 && contacts.length > 0) {
+            const sampleSize = Math.min(5, contacts.length);
+            console.log(`[Amplemarket Sync] Sample of first ${sampleSize} hydrated contacts:`);
+            for (let i = 0; i < sampleSize; i++) {
+              const sample = contacts[i];
+              const ownerEmail = extractOwnerEmail(sample);
+              console.log(`  Contact ${i + 1}:`, {
+                external_id: sample.id,
+                email: sample.email,
+                owner_raw: sample.owner,
+                owner_extracted: ownerEmail,
+                owner_normalized: normalizeEmail(ownerEmail),
+                selected_owner_normalized: normalizedSelectedEmail,
+                matches: normalizeEmail(ownerEmail) === normalizedSelectedEmail
+              });
+            }
+          }
+          
+          // Process each hydrated contact with STRICT owner filtering
           for (const contact of contacts) {
             try {
               // Skip if no email
@@ -250,6 +242,24 @@ export async function syncAmplemarketContacts(
                 skippedCount++;
                 continue;
               }
+              
+              // CRITICAL: Owner filtering on hydrated contact
+              const contactOwnerEmail = extractOwnerEmail(contact);
+              const normalizedContactOwner = normalizeEmail(contactOwnerEmail);
+              
+              if (!contactOwnerEmail) {
+                missingOwnerField++;
+                discardedOtherOwners++;
+                continue;
+              }
+              
+              // Filter by owner - only keep contacts matching selected user
+              if (normalizedContactOwner !== normalizedSelectedEmail) {
+                discardedOtherOwners++;
+                continue;
+              }
+              
+              keptMatchingOwner++;
             
               // Check if person already exists by email
               const [existingPerson] = await db
@@ -342,15 +352,38 @@ export async function syncAmplemarketContacts(
       }
     }
     
-    console.log("[Amplemarket Sync] all_user_contacts mode complete:", {
-      fetchedTotal,
-      missingOwnerField,
-      keptMatchingOwner,
-      discardedOtherOwners,
-      createdCount,
-      updatedCount,
-      skippedCount
-    });
+    // Comprehensive sync summary with all required details
+    const syncSummary = {
+      mode: 'all_user_contacts',
+      selected_amplemarket_user_email: amplemarketUserEmail,
+      selected_amplemarket_user_id: amplemarketUserId,
+      
+      // Step 1: ID collection
+      lists_scanned: listsScanned,
+      ids_source_endpoint: '/lead-lists (all lists)',
+      ids_fetched_total: idsScannedTotal,
+      ids_collected_raw: allLeadIds.length,
+      ids_deduped_total: uniqueLeadIds.length,
+      duplicates_removed: duplicatesRemoved,
+      
+      // Step 2: Hydration
+      hydration_endpoint: '/contacts?ids=...',
+      contacts_hydrated_total: fetchedTotal,
+      
+      // Owner filtering (applied on hydrated contacts)
+      missing_owner_field: missingOwnerField,
+      kept_owner_match: keptMatchingOwner,
+      discarded_owner_mismatch: discardedOtherOwners,
+      
+      // Upsert results
+      created: createdCount,
+      updated: updatedCount,
+      skipped: skippedCount
+    };
+    
+    console.log("[Amplemarket Sync] ===== SYNC SUMMARY =====");
+    console.log(JSON.stringify(syncSummary, null, 2));
+    console.log("[Amplemarket Sync] ===== END SUMMARY =====");
     
     // Diagnostic message if no contacts matched owner
     let diagnosticMessage = undefined;

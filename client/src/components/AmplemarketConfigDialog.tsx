@@ -181,7 +181,7 @@ export function AmplemarketConfigDialog({ open, onOpenChange, currentConfig, onS
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              Choose whether to sync all contacts owned by the selected user, or only contacts from specific lists/sequences
+              <strong>Note:</strong> "All contacts for user" is limited to contacts present in lists. Contacts not in any list will not be synced.
             </p>
           </div>
 

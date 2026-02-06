@@ -101,6 +101,37 @@ export class AmplemarketClient {
           return Promise.reject(enhancedError);
         }
         
+        // Retry logic for 429 (rate limit) and 5xx (server errors)
+        if (status === 429 || (status >= 500 && status < 600)) {
+          const retryCount = (error.config as any).__retryCount || 0;
+          const maxRetries = 3;
+          
+          if (retryCount < maxRetries) {
+            (error.config as any).__retryCount = retryCount + 1;
+            
+            // Exponential backoff with jitter: 1s, 2s, 4s + random 0-1s
+            const baseDelay = Math.pow(2, retryCount) * 1000;
+            const jitter = Math.random() * 1000;
+            const delay = baseDelay + jitter;
+            
+            console.warn(`[Amplemarket API] [${correlationId}] Retrying after ${status} error (attempt ${retryCount + 1}/${maxRetries}) in ${Math.round(delay)}ms`);
+            
+            return new Promise((resolve) => {
+              setTimeout(() => {
+                resolve(this.client.request(error.config));
+              }, delay);
+            });
+          } else {
+            const enhancedError = new Error(
+              `Amplemarket API failed after ${maxRetries} retries: ${status} ${error.response?.statusText}. ` +
+              `Last response: ${JSON.stringify(error.response?.data)}`
+            );
+            (enhancedError as any).originalError = error;
+            (enhancedError as any).status = status;
+            return Promise.reject(enhancedError);
+          }
+        }
+        
         console.error("[Amplemarket API] Response Error:", {
           status: error.response?.status,
           statusText: error.response?.statusText,

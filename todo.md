@@ -2424,3 +2424,15 @@
 - [x] Add logging: ids_fetched_total, contacts_hydrated_total, kept_owner_match, discarded_owner_mismatch
 - [x] Add unit test preventing /contacts calls without ids
 - [ ] Test all_user_contacts and verify no 400 errors
+
+## Verify and Secure all_user_contacts Implementation
+
+- [x] Remove early owner filtering on leads - apply ONLY on hydrated contacts
+- [x] Add ID deduplication across lists to prevent duplicate imports
+- [x] Add retry logic with exponential backoff for 429 and 5xx errors
+- [x] Update UI to document: "All contacts for user is limited to contacts in lists"
+- [x] Add comprehensive logging: correlation IDs, endpoints, dedup counts, owner filtering proof
+- [ ] Run real sync and paste full log summary
+- [ ] Verify no 400 errors
+- [ ] Verify non-zero kept_owner_match for selected owner
+- [ ] Verify wrong-owner contacts are NOT imported
