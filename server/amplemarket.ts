@@ -75,20 +75,37 @@ async function syncAccountFromContact(db: any, tenantId: string, contact: any): 
 /**
  * Sync contacts from Amplemarket lead lists
  */
-export async function syncAmplemarketContacts(db: any, tenantId: string, apiKey: string, selectedListIds: string[] = []) {
-  let totalSyncedCount = 0;
+export async function syncAmplemarketContacts(
+  db: any,
+  tenantId: string,
+  integrationId: string,
+  apiKey: string,
+  amplemarketUserId: string,
+  amplemarketUserEmail: string,
+  selectedListIds: string[] = []
+) {
+  // Fail-fast validation: user must be selected
+  if (!amplemarketUserId || !amplemarketUserEmail) {
+    throw new Error("Amplemarket user must be selected before syncing. Please select a user in the configuration.");
+  }
   
-  // If no lists selected, fetch all lists
+  console.log("[Amplemarket Sync] Starting sync with user scoping:", {
+    tenantId,
+    integrationId,
+    amplemarketUserId,
+    amplemarketUserEmail,
+    selectedListIds: selectedListIds.length
+  });
+  
+  // Initialize sync counters
+  let createdCount = 0;
+  let updatedCount = 0;
+  let skippedCount = 0;
+  const syncStartTime = new Date();
+  
+  // Fail-fast validation: lists must be selected (no workspace-wide pulls)
   if (selectedListIds.length === 0) {
-    const listsUrl = `${AMPLEMARKET_API_BASE}/lead-lists`;
-    console.log("[Amplemarket Sync] Fetching all lists:", { url: listsUrl });
-    
-    const listsResponse = await axios.get(listsUrl, {
-      headers: { "Authorization": `Bearer ${apiKey}` },
-    });
-    
-    selectedListIds = listsResponse.data.lead_lists?.map((list: any) => list.id) || [];
-    console.log("[Amplemarket Sync] Found lists:", { count: selectedListIds.length });
+    throw new Error("No lists selected for sync. Please select specific lists in the configuration to prevent workspace-wide data pulls.");
   }
   
   // Fetch contacts from each selected list
@@ -174,6 +191,9 @@ export async function syncAmplemarketContacts(db: any, tenantId: string, apiKey:
           enrichmentSource: "amplemarket",
           enrichmentSnapshot: lead,
           enrichmentLastSyncedAt: new Date(),
+          integrationId,
+          amplemarketUserId,
+          amplemarketExternalId: lead.id || lead.email, // Use lead ID or email as external ID
           updatedAt: new Date(),
         };
 
@@ -183,6 +203,7 @@ export async function syncAmplemarketContacts(db: any, tenantId: string, apiKey:
             .update(people)
             .set(personData)
             .where(eq(people.id, existingPerson.id));
+          updatedCount++;
         } else {
           // Create new person
           await db.insert(people).values({
@@ -191,8 +212,8 @@ export async function syncAmplemarketContacts(db: any, tenantId: string, apiKey:
             ...personData,
             createdAt: new Date(),
           });
+          createdCount++;
         }
-        totalSyncedCount++;
       }
     } catch (error: any) {
       console.error("[Amplemarket Sync] Error fetching list:", {
@@ -207,14 +228,38 @@ export async function syncAmplemarketContacts(db: any, tenantId: string, apiKey:
     }
   }
   
-  return totalSyncedCount;
+  console.log("[Amplemarket Sync] Sync completed:", {
+    createdCount,
+    updatedCount,
+    skippedCount,
+    totalProcessed: createdCount + updatedCount,
+    duration: `${(new Date().getTime() - syncStartTime.getTime()) / 1000}s`
+  });
+  
+  return { createdCount, updatedCount, skippedCount };
 }
 
 /**
  * Full Amplemarket sync: contacts (accounts are derived from contact company data)
  */
-export async function syncAmplemarket(db: any, tenantId: string, apiKey: string, selectedListIds: string[] = []) {
-  const contactsSynced = await syncAmplemarketContacts(db, tenantId, apiKey, selectedListIds);
+export async function syncAmplemarket(
+  db: any,
+  tenantId: string,
+  integrationId: string,
+  apiKey: string,
+  amplemarketUserId: string,
+  amplemarketUserEmail: string,
+  selectedListIds: string[] = []
+) {
+  const syncResult = await syncAmplemarketContacts(
+    db,
+    tenantId,
+    integrationId,
+    apiKey,
+    amplemarketUserId,
+    amplemarketUserEmail,
+    selectedListIds
+  );
 
   // Update last synced timestamp
   await db
@@ -225,5 +270,11 @@ export async function syncAmplemarket(db: any, tenantId: string, apiKey: string,
       eq(integrations.provider, "amplemarket")
     ));
 
-  return { accountsSynced: 0, contactsSynced, totalSynced: contactsSynced };
+  return {
+    accountsSynced: 0, // Accounts are derived from contacts
+    contactsCreated: syncResult.createdCount,
+    contactsUpdated: syncResult.updatedCount,
+    contactsSkipped: syncResult.skippedCount,
+    totalSynced: syncResult.createdCount + syncResult.updatedCount
+  };
 }

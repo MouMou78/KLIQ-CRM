@@ -74,10 +74,14 @@ export function AmplemarketConfigDialog({ open, onOpenChange, currentConfig, onS
   }
 
   const handleSave = () => {
+    // Find selected user email from amplemarketUsers list
+    const selectedUser = amplemarketUsers?.find((u: any) => u.id === selectedUserId);
+    
     updateConfig.mutate({
       syncSchedule,
       conflictStrategy,
-      userId: selectedUserId,
+      amplemarketUserId: selectedUserId,
+      amplemarketUserEmail: selectedUser?.email || '',
       selectedLists,
       selectedSequences,
     });

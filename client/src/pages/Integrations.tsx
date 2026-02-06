@@ -80,7 +80,7 @@ export default function Integrations() {
 
   const syncAmplemarket = trpc.integrations.syncAmplemarket.useMutation({
     onSuccess: (data) => {
-      toast.success(`Synced ${data.totalSynced} items (${data.accountsSynced} accounts, ${data.contactsSynced} contacts)`);
+      toast.success(`Synced ${data.totalSynced} contacts (${data.contactsCreated} created, ${data.contactsUpdated} updated)`);
       refetch();
     },
     onError: (error) => {

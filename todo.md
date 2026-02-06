@@ -2248,3 +2248,22 @@
 - [x] Fix root cause - changed from /contacts to /lead-lists/{id} to fetch leads from selected lists
 - [x] Add clear error messaging showing exact endpoint that failed
 - [ ] Verify sync returns 200 from both our backend and Amplemarket
+
+## Amplemarket Integration Finalization
+- [x] Update people table schema to add: integrationId, amplemarketUserId, amplemarketExternalId fields
+- [x] Update accounts table schema to add: integrationId, amplemarketUserId, amplemarketExternalId fields
+- [x] Generate and apply database migration for new tracking fields
+- [x] Update sync logic to persist integration_id, amplemarket_user_id, amplemarket_external_id
+- [x] Implement scoped rollback endpoint: rollbackLastAmplemarketSync mutation
+- [x] Add rollback logic to delete ONLY records from last incorrect sync (by tenant, integration, sync timestamp)
+- [ ] Add "Rollback Last Sync" button to UI that calls rollback endpoint
+- [x] Enforce user selection validation - fail fast if sync triggered without selected user
+- [x] Update config save to persist and reload amplemarketUserId and amplemarketUserEmail
+- [x] Remove any "delete then reimport" or "clear integration data" logic
+- [x] Update sync logic to use amplemarket_external_id for deduplication
+- [x] Add sync summary logging (createdCount, updatedCount, skippedCount, duration)
+- [x] Add comprehensive logging with tenant_id, integration_id, user scoping
+- [ ] Test rollback of incorrect sync data without touching other records
+- [ ] Test changing Amplemarket user and resyncing with correct data
+- [x] Verify no workspace-wide imports occur (enforced by list selection requirement)
+- [x] Verify no silent deletes during sync (all deletes are explicit via rollback)

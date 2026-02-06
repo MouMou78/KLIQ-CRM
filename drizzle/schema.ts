@@ -55,6 +55,11 @@ export const accounts = mysqlTable("accounts", {
   enrichmentSource: text("enrichmentSource"),
   enrichmentSnapshot: json("enrichmentSnapshot").$type<Record<string, any>>(),
   
+  // Amplemarket integration tracking
+  integrationId: varchar("integrationId", { length: 36 }),
+  amplemarketUserId: varchar("amplemarketUserId", { length: 100 }),
+  amplemarketExternalId: varchar("amplemarketExternalId", { length: 100 }),
+  
   // Lead Scoring Fields
   fitScore: int("fitScore").default(0),
   intentScore: int("intentScore").default(0),
@@ -139,6 +144,11 @@ export const people = mysqlTable("people", {
   enrichmentSource: text("enrichmentSource"),
   enrichmentSnapshot: json("enrichmentSnapshot").$type<Record<string, any>>(),
   enrichmentLastSyncedAt: timestamp("enrichmentLastSyncedAt"),
+  
+  // Amplemarket integration tracking
+  integrationId: varchar("integrationId", { length: 36 }),
+  amplemarketUserId: varchar("amplemarketUserId", { length: 100 }),
+  amplemarketExternalId: varchar("amplemarketExternalId", { length: 100 }),
   
   // Assignment tracking
   assignedToUserId: varchar("assignedToUserId", { length: 36 }),

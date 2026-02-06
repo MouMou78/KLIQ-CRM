@@ -1807,18 +1807,48 @@ Generate a subject line and email body. Format your response as JSON with "subje
         if (!amplemarketIntegration || amplemarketIntegration.status !== "connected") {
           throw new TRPCError({ code: "BAD_REQUEST", message: "Amplemarket not connected" });
         }
-        const apiKey = (amplemarketIntegration.config as any)?.apiKey;
-        if (!apiKey) throw new TRPCError({ code: "BAD_REQUEST", message: "Amplemarket API key not found" });
-        const selectedLists = (amplemarketIntegration.config as any)?.selectedLists || [];
+        
+        const config = amplemarketIntegration.config as any;
+        const apiKey = config?.apiKey;
+        const amplemarketUserId = config?.amplemarketUserId;
+        const amplemarketUserEmail = config?.amplemarketUserEmail;
+        const selectedLists = config?.selectedLists || [];
+        
+        // Fail-fast validation
+        if (!apiKey) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Amplemarket API key not found" });
+        }
+        if (!amplemarketUserId || !amplemarketUserEmail) {
+          throw new TRPCError({ 
+            code: "BAD_REQUEST", 
+            message: "Amplemarket user must be selected before syncing. Please select a user in the configuration." 
+          });
+        }
+        if (selectedLists.length === 0) {
+          throw new TRPCError({ 
+            code: "BAD_REQUEST", 
+            message: "No lists selected for sync. Please select specific lists in the configuration." 
+          });
+        }
+        
         const dbInstance = await db.getDb();
-        return syncAmplemarket(dbInstance, ctx.user.tenantId, apiKey, selectedLists);
+        return syncAmplemarket(
+          dbInstance,
+          ctx.user.tenantId,
+          amplemarketIntegration.id,
+          apiKey,
+          amplemarketUserId,
+          amplemarketUserEmail,
+          selectedLists
+        );
       }),
 
     updateAmplemarketConfig: protectedProcedure
       .input(z.object({
         syncSchedule: z.enum(["manual", "hourly", "daily", "weekly"]),
         conflictStrategy: z.enum(["keep_crm", "keep_amplemarket", "merge_latest", "manual"]),
-        userId: z.string().optional(),
+        amplemarketUserId: z.string().optional(),
+        amplemarketUserEmail: z.string().optional(),
         selectedLists: z.array(z.string()).optional(),
         selectedSequences: z.array(z.string()).optional(),
       }))
@@ -1829,18 +1859,23 @@ Generate a subject line and email body. Format your response as JSON with "subje
           throw new TRPCError({ code: "BAD_REQUEST", message: "Amplemarket not connected" });
         }
         const currentConfig = (amplemarketIntegration.config as any) || {};
+        const newConfig = {
+          ...currentConfig,
+          syncSchedule: input.syncSchedule,
+          conflictStrategy: input.conflictStrategy,
+          amplemarketUserId: input.amplemarketUserId,
+          amplemarketUserEmail: input.amplemarketUserEmail,
+          selectedLists: input.selectedLists,
+          selectedSequences: input.selectedSequences,
+        };
+        
         await db.upsertIntegration(ctx.user.tenantId, "amplemarket", {
           status: amplemarketIntegration.status,
-          config: {
-            ...currentConfig,
-            syncSchedule: input.syncSchedule,
-            conflictStrategy: input.conflictStrategy,
-            userId: input.userId,
-            selectedLists: input.selectedLists,
-            selectedSequences: input.selectedSequences,
-          },
+          config: newConfig,
         });
-        return { success: true };
+        
+        // Return the saved config to confirm persistence
+        return { success: true, config: newConfig };
       }),
 
     getAmplemarketUsers: protectedProcedure
@@ -2028,6 +2063,55 @@ Generate a subject line and email body. Format your response as JSON with "subje
       .mutation(async ({ input, ctx }) => {
         const { previewAmplemarketSync } = await import('./amplemarketSync');
         return previewAmplemarketSync(ctx.user.tenantId, input);
+      }),
+
+    rollbackLastAmplemarketSync: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        const integrations = await db.getIntegrationsByTenant(ctx.user.tenantId);
+        const amplemarketIntegration = integrations.find((i: any) => i.provider === "amplemarket");
+        if (!amplemarketIntegration) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Amplemarket integration not found" });
+        }
+        
+        const { rollbackLastAmplemarketSync } = await import('./amplemarketRollback');
+        const dbInstance = await db.getDb();
+        const result = await rollbackLastAmplemarketSync(
+          dbInstance,
+          ctx.user.tenantId,
+          amplemarketIntegration.id
+        );
+        
+        return {
+          success: true,
+          deletedPeople: result.deletedPeople,
+          deletedAccounts: result.deletedAccounts,
+          syncLogId: result.syncLogId,
+          message: `Rolled back last sync: deleted ${result.deletedPeople} contacts and ${result.deletedAccounts} accounts`
+        };
+      }),
+
+    deleteAllAmplemarketData: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        const integrations = await db.getIntegrationsByTenant(ctx.user.tenantId);
+        const amplemarketIntegration = integrations.find((i: any) => i.provider === "amplemarket");
+        if (!amplemarketIntegration) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Amplemarket integration not found" });
+        }
+        
+        const { deleteAllAmplemarketData } = await import('./amplemarketRollback');
+        const dbInstance = await db.getDb();
+        const result = await deleteAllAmplemarketData(
+          dbInstance,
+          ctx.user.tenantId,
+          amplemarketIntegration.id
+        );
+        
+        return {
+          success: true,
+          deletedPeople: result.deletedPeople,
+          deletedAccounts: result.deletedAccounts,
+          message: `Deleted all Amplemarket data: ${result.deletedPeople} contacts and ${result.deletedAccounts} accounts`
+        };
       }),
     
     listAmplemarketAccounts: protectedProcedure
