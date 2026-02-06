@@ -1,4 +1,5 @@
 import axios from "axios";
+import qs from "qs";
 import { nanoid } from "nanoid";
 import { TRPCError } from "@trpc/server";
 import { accounts, people, integrations, amplemarketSyncLogs } from "../drizzle/schema";
@@ -259,22 +260,29 @@ export async function syncAmplemarketContacts(
         const batch = batches[batchIndex];
         console.log(`[Amplemarket Sync] Hydrating batch ${batchIndex + 1}/${batches.length} (${batch.length} IDs)`);
         
-        // Log hydration request sample for first batch
-        if (batchIndex === 0) {
-          console.log("[Amplemarket Sync] ===== HYDRATION REQUEST SAMPLE (batch 1) =====");
-          console.log(`Endpoint: GET /contacts`);
-          console.log(`Query param: ids=${batch.join(',')}`);
-          console.log(`Batch size: ${batch.length} (max 20)`);
-          console.log(`IDs serialization: comma-separated string`);
-          console.log("[Amplemarket Sync] ===== END HYDRATION REQUEST SAMPLE =====");
+        // CRITICAL: Hard assertion - batch size MUST be <= 20
+        if (batch.length > 20) {
+          throw new Error(`Batch size ${batch.length} exceeds maximum of 20. This is a bug.`);
         }
         
         try {
-          // Call /contacts with ids parameter
-          const idsParam = batch.join(',');
+          // Call /contacts with ids[] parameter using repeated query params
+          // Correct: /contacts?ids[]=1&ids[]=2&ids[]=3
+          // Incorrect: /contacts?ids=1,2,3
           const contactsResponse = await (client as any).client.get('/contacts', {
-            params: { ids: idsParam }
+            params: { ids: batch },
+            paramsSerializer: (params: any) => qs.stringify(params, { arrayFormat: 'brackets' })
           });
+          
+          // Log hydration proof for first batch
+          if (batchIndex === 0) {
+            const serializedQuery = qs.stringify({ ids: batch }, { arrayFormat: 'brackets' });
+            console.log("[Amplemarket Sync] ===== HYDRATION PROOF (batch 1) =====");
+            console.log(`Batch size: ${batch.length}`);
+            console.log(`Serialized query: ${serializedQuery.substring(0, 200)}...`);
+            console.log(`Response contacts.length: ${contactsResponse.data.contacts?.length || 0}`);
+            console.log("[Amplemarket Sync] ===== END HYDRATION PROOF =====");
+          }
           
           const contacts = contactsResponse.data.contacts || [];
           console.log(`[Amplemarket Sync] Hydrated ${contacts.length} contacts from batch`);

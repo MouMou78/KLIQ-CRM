@@ -2487,3 +2487,12 @@
 - [x] Fix batch size to 20 max for /contacts?ids[] calls
 - [ ] Run sync and identify which counter is zero from UI
 - [ ] Fix the first zero counter based on diagnostic output
+
+## Fix /contacts Hydration Returning 0 Contacts
+
+- [x] Fix ids[] serialization to use repeated query params (ids[]=1&ids[]=2&ids[]=3) instead of comma-separated string
+- [x] Install qs package for proper array serialization in Axios
+- [x] Add hard assertion that batch.length <= 20 before each hydration request
+- [x] Add hydration proof logging: batch size, serialized query string, response.contacts.length
+- [ ] Test hydration with one batch and verify non-zero contacts returned
+- [ ] Run full sync and verify kept_owner_match > 0 and created/updated > 0
