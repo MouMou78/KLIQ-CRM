@@ -853,9 +853,9 @@ export async function syncAmplemarket(
         status: "completed",
         completedAt: new Date(),
         
-        // Sync results from new lead-based sync
-        contactsCreated: syncResult.contacts_created,
-        contactsUpdated: syncResult.contacts_updated,
+        // Sync results from lead-based sync
+        contactsCreated: syncResult.leads_created,
+        contactsUpdated: syncResult.leads_updated,
         contactsSkipped: syncResult.leads_skipped,
         contactsFetched: syncResult.leads_processed_total,
         contactsKept: syncResult.leads_matching_owner,
@@ -868,8 +868,8 @@ export async function syncAmplemarket(
         contactsWithOwnerFieldCount: syncResult.leads_with_owner_field,
         keptOwnerMatch: syncResult.leads_matching_owner,
         discardedOwnerMismatch: syncResult.leads_wrong_owner,
-        created: syncResult.contacts_created,
-        updated: syncResult.contacts_updated,
+        created: syncResult.leads_created,
+        updated: syncResult.leads_updated,
         skipped: syncResult.leads_skipped,
       })
       .where(eq(amplemarketSyncLogs.id, syncLogId));
@@ -883,13 +883,13 @@ export async function syncAmplemarket(
         eq(integrations.provider, "amplemarket")
       ));
 
-    // Enforce 422 errors for zero-contact conditions
+    // Enforce 422 errors for zero-lead conditions
     const listsScanned = syncResult.lists_scanned || 0;
     const leadsProcessed = syncResult.leads_processed_total || 0;
     const leadsWithOwner = syncResult.leads_with_owner_field || 0;
     const leadsMatchingOwner = syncResult.leads_matching_owner || 0;
-    const created = syncResult.contacts_created || 0;
-    const updated = syncResult.contacts_updated || 0;
+    const created = syncResult.leads_created || 0;
+    const updated = syncResult.leads_updated || 0;
     
     // Build comprehensive response with all counters
     const response = {
@@ -910,22 +910,15 @@ export async function syncAmplemarket(
       leads_wrong_owner: syncResult.leads_wrong_owner || 0,
       
       // Stage 3: Upsert
-      contacts_created: created,
-      contacts_updated: updated,
+      leads_created: created,
+      leads_updated: updated,
       leads_skipped: syncResult.leads_skipped || 0,
       
-      // Legacy fields for backward compatibility
-      accountsSynced: 0,
-      contactsCreated: created,
-      contactsUpdated: updated,
-      contactsSkipped: syncResult.leads_skipped || 0,
-      contactsFetched: leadsProcessed,
-      contactsKept: leadsMatchingOwner,
-      contactsDiscarded: syncResult.leads_wrong_owner || 0,
+      // Totals
       totalSynced: created + updated
     };
     
-    // Enforce hard failure for zero-contact conditions
+    // Enforce hard failure for zero-lead conditions
     if (listsScanned === 0) {
       throw new TRPCError({
         code: 'UNPROCESSABLE_CONTENT',

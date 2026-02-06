@@ -56,8 +56,8 @@ export async function syncAmplemarketFromLeads(
   let leadsMatchingOwner = 0;
   let leadsWrongOwner = 0;
   let leadsSkipped = 0;
-  let contactsCreated = 0;
-  let contactsUpdated = 0;
+  let leadsCreated = 0;
+  let leadsUpdated = 0;
   
   const { createAmplemarketClient } = await import('./amplemarketClient');
   const client = createAmplemarketClient(apiKey);
@@ -161,7 +161,7 @@ export async function syncAmplemarketFromLeads(
                 updatedAt: new Date(),
               })
               .where(eq(leads.id, existingLead.id));
-            contactsUpdated++;
+            leadsUpdated++;
           } else {
             // Create new lead
             await db
@@ -173,7 +173,7 @@ export async function syncAmplemarketFromLeads(
                 createdAt: new Date(),
                 updatedAt: new Date(),
               });
-            contactsCreated++;
+            leadsCreated++;
           }
         } catch (error: any) {
           console.error(`[Amplemarket Sync] Error processing lead ${lead.id}:`, error.message);
@@ -193,15 +193,15 @@ export async function syncAmplemarketFromLeads(
   console.log(`Leads matching owner: ${leadsMatchingOwner}`);
   console.log(`Leads wrong owner: ${leadsWrongOwner}`);
   console.log(`Leads skipped: ${leadsSkipped}`);
-  console.log(`Contacts created: ${contactsCreated}`);
-  console.log(`Contacts updated: ${contactsUpdated}`);
+  console.log(`Leads created: ${leadsCreated}`);
+  console.log(`Leads updated: ${leadsUpdated}`);
   console.log("[Amplemarket Sync] ===== END SYNC =====");
   
-  // Guardrail: Fail if zero contacts synced
-  if (leadsMatchingOwner > 0 && contactsCreated === 0 && contactsUpdated === 0) {
+  // Guardrail: Fail if zero leads synced
+  if (leadsMatchingOwner > 0 && leadsCreated === 0 && leadsUpdated === 0) {
     throw new TRPCError({
       code: 'INTERNAL_SERVER_ERROR',
-      message: `Sync failed: ${leadsMatchingOwner} leads matched owner but 0 contacts created/updated. This indicates a database or mapping issue.`
+      message: `Sync failed: ${leadsMatchingOwner} leads matched owner but 0 leads created/updated. This indicates a database or mapping issue.`
     });
   }
   
@@ -215,11 +215,7 @@ export async function syncAmplemarketFromLeads(
     leads_matching_owner: leadsMatchingOwner,
     leads_wrong_owner: leadsWrongOwner,
     leads_skipped: leadsSkipped,
-    contacts_created: contactsCreated,
-    contacts_updated: contactsUpdated,
-    // Legacy fields
-    createdCount: contactsCreated,
-    updatedCount: contactsUpdated,
-    skippedCount: leadsSkipped,
+    leads_created: leadsCreated,
+    leads_updated: leadsUpdated,
   };
 }

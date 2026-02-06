@@ -2537,3 +2537,14 @@
 - [ ] Test end-to-end Amplemarket sync with real credentials
 - [ ] Verify leads are imported correctly with owner filtering
 - [ ] Optional: Implement "Convert Lead to Contact" feature for manual promotion
+
+## Disable Amplemarket Contact Sync (Final Instruction)
+- [x] Audit current sync implementation and identify all Contact sync code
+- [x] Remove all Contact sync logic from Amplemarket integration
+- [x] Ensure sync only targets Lead entity (no Contact/Person creation)
+- [x] Update sync API responses to report "leads" instead of "contacts"
+- [x] Update UI to show "Synced X leads" instead of "Synced X contacts"
+- [x] Add info text: "Amplemarket provides lead data. Contacts can be created manually from leads if needed."
+- [x] Verify no /contacts API calls are made during sync
+- [ ] Test sync and verify non-zero lead results
+- [ ] Ensure no silent zero runs

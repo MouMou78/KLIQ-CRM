@@ -64,7 +64,7 @@ export function AmplemarketSync() {
       <div>
         <h1 className="text-3xl font-bold">Amplemarket Sync</h1>
         <p className="text-muted-foreground mt-1">
-          Monitor sync status and manage data synchronization from Amplemarket
+          Sync leads from Amplemarket lists. Leads can be converted to contacts manually if needed.
         </p>
       </div>
 
@@ -132,13 +132,13 @@ export function AmplemarketSync() {
                     </div>
                   </div>
                   
-                  {/* Stage 2: Hydration */}
+                  {/* Stage 2: Lead Processing */}
                   <div className="pt-4 border-t">
-                    <h4 className="text-sm font-semibold mb-3">Stage 2: Contact Hydration</h4>
+                    <h4 className="text-sm font-semibold mb-3">Stage 2: Lead Processing</h4>
                     <div className="grid grid-cols-1 gap-4">
                       <div>
-                        <p className="text-sm text-muted-foreground">Contacts Hydrated</p>
-                        <p className="text-2xl font-bold">{syncStatus.contactsHydratedTotal || 0}</p>
+                        <p className="text-sm text-muted-foreground">Leads Processed</p>
+                        <p className="text-2xl font-bold">{syncStatus.leadIdsFetchedTotal || 0}</p>
                       </div>
                     </div>
                   </div>
@@ -161,14 +161,14 @@ export function AmplemarketSync() {
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Missing Owner</p>
-                        <p className="text-2xl font-bold text-red-400">{(syncStatus.contactsHydratedTotal || 0) - (syncStatus.contactsWithOwnerFieldCount || 0)}</p>
+                        <p className="text-2xl font-bold text-red-400">{(syncStatus.leadIdsFetchedTotal || 0) - (syncStatus.contactsWithOwnerFieldCount || 0)}</p>
                       </div>
                     </div>
                   </div>
                   
                   {/* Stage 4: Upsert */}
                   <div className="pt-4 border-t">
-                    <h4 className="text-sm font-semibold mb-3">Stage 4: Database Upsert</h4>
+                    <h4 className="text-sm font-semibold mb-3">Stage 4: Lead Upsert</h4>
                     <div className="grid grid-cols-4 gap-4">
                       <div>
                         <p className="text-sm text-muted-foreground">Created</p>
@@ -280,8 +280,8 @@ export function AmplemarketSync() {
                   </div>
                   {log.status === 'completed' && (
                     <div className="flex gap-4 text-sm">
-                      <span className="text-green-600">+{log.contactsCreated || 0}</span>
-                      <span className="text-blue-600">~{log.contactsUpdated || 0}</span>
+                      <span className="text-green-600">+{log.created || 0} leads</span>
+                      <span className="text-blue-600">~{log.updated || 0} leads</span>
                       {log.conflictsDetected > 0 && (
                         <span className="text-orange-600">!{log.conflictsDetected}</span>
                       )}
