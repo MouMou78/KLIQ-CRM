@@ -2070,3 +2070,10 @@
 - [x] Add conflict resolution logic for duplicate contacts
 - [x] Add merge strategy options (keep CRM data, keep Amplemarket data, manual review)
 - [x] Show sync preview before applying changes
+
+## Amplemarket API Integration & History
+- [x] Replace mock data with real Amplemarket API calls for users, lists, and sequences
+- [x] Build sync history log page showing timestamp, records synced, conflicts, errors
+- [x] Create conflict review dashboard for manual conflict resolution
+- [x] Add side-by-side comparison UI for conflicting records
+- [x] Implement choose data source buttons (keep CRM, keep Amplemarket, merge)

@@ -10,6 +10,7 @@ import {
   nextActions, NextAction, InsertNextAction,
   events, Event, InsertEvent,
   integrations, Integration, InsertIntegration,
+  syncHistory, SyncHistory, InsertSyncHistory,
   aiConversations
 } from "../drizzle/schema";
 import { nanoid } from "nanoid";
@@ -363,6 +364,14 @@ export async function getIntegrationsByTenant(tenantId: string): Promise<Integra
   return db.select().from(integrations).where(eq(integrations.tenantId, tenantId));
 }
 
+export async function getSyncHistory(tenantId: string): Promise<SyncHistory[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select().from(syncHistory)
+    .where(eq(syncHistory.tenantId, tenantId))
+    .orderBy(desc(syncHistory.createdAt));
+}
 
 export async function getThreadsByTenant(tenantId: string): Promise<Thread[]> {
   const db = await getDb();

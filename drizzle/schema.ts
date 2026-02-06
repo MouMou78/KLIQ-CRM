@@ -317,6 +317,25 @@ export const integrations = mysqlTable("integrations", {
 export type Integration = typeof integrations.$inferSelect;
 export type InsertIntegration = typeof integrations.$inferInsert;
 
+// Sync History
+export const syncHistory = mysqlTable("syncHistory", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenantId", { length: 36 }).notNull(),
+  provider: varchar("provider", { length: 50 }).notNull(),
+  syncType: varchar("syncType", { length: 50 }).notNull(),
+  status: mysqlEnum("status", ["success", "partial", "failed"]).notNull(),
+  recordsSynced: int("recordsSynced").notNull().default(0),
+  conflictsResolved: int("conflictsResolved").notNull().default(0),
+  errors: json("errors").$type<any[]>(),
+  config: json("config").$type<Record<string, any>>(),
+  startedAt: timestamp("startedAt").notNull(),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type SyncHistory = typeof syncHistory.$inferSelect;
+export type InsertSyncHistory = typeof syncHistory.$inferInsert;
+
 // Email Sequences
 export const emailSequences = mysqlTable("emailSequences", {
   id: varchar("id", { length: 36 }).primaryKey(),

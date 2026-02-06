@@ -12,6 +12,8 @@ import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail";
 import PublicLeadCapture from "./pages/PublicLeadCapture";
 import Integrations from "./pages/Integrations";
+import SyncHistory from "./pages/SyncHistory";
+import ConflictReview from "./pages/ConflictReview";
 import Funnel from "./pages/Funnel";
 import Analytics from "./pages/Analytics";
 import Dashboard from "./pages/Dashboard";
@@ -163,6 +165,18 @@ function Router() {
       <Route path="/integrations">
         <DashboardLayout>
           <Integrations />
+        </DashboardLayout>
+      </Route>
+      
+      <Route path="/sync-history">
+        <DashboardLayout>
+          <SyncHistory />
+        </DashboardLayout>
+      </Route>
+      
+      <Route path="/conflict-review">
+        <DashboardLayout>
+          <ConflictReview />
         </DashboardLayout>
       </Route>
       

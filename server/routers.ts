@@ -13,6 +13,7 @@ import { computeFunnelStage, groupThreadsByStage, computeVelocity } from "./funn
 import { calculateEngagementScore, getScoreBreakdown } from "./scoring";
 import { scoreContact } from "./lead-scoring";
 import { invokeLLM } from "./_core/llm";
+import axios from "axios";
 
 export const appRouter = router({
   system: systemRouter,
@@ -1843,31 +1844,76 @@ Generate a subject line and email body. Format your response as JSON with "subje
 
     getAmplemarketUsers: protectedProcedure
       .query(async ({ ctx }) => {
-        // Mock data - in production, fetch from Amplemarket API
-        return [
-          { id: "user1", name: "John Doe", email: "john@example.com" },
-          { id: "user2", name: "Jane Smith", email: "jane@example.com" },
-        ];
+        const integrations = await db.getIntegrationsByTenant(ctx.user.tenantId);
+        const amplemarketIntegration = integrations.find((i: any) => i.provider === "amplemarket");
+        if (!amplemarketIntegration || amplemarketIntegration.status !== "connected") {
+          return [];
+        }
+        const apiKey = (amplemarketIntegration.config as any)?.apiKey;
+        if (!apiKey) return [];
+        
+        try {
+          const response = await axios.get("https://api.amplemarket.com/v1/users", {
+            headers: { "X-Api-Key": apiKey },
+          });
+          return response.data.users?.map((u: any) => ({
+            id: u.id,
+            name: u.name || u.full_name,
+            email: u.email,
+          })) || [];
+        } catch (error) {
+          console.error("Failed to fetch Amplemarket users:", error);
+          return [];
+        }
       }),
 
     getAmplemarketLists: protectedProcedure
       .query(async ({ ctx }) => {
-        // Mock data - in production, fetch from Amplemarket API
-        return [
-          { id: "list1", name: "Q1 Prospects", contactCount: 150 },
-          { id: "list2", name: "Enterprise Leads", contactCount: 75 },
-          { id: "list3", name: "Warm Leads", contactCount: 200 },
-        ];
+        const integrations = await db.getIntegrationsByTenant(ctx.user.tenantId);
+        const amplemarketIntegration = integrations.find((i: any) => i.provider === "amplemarket");
+        if (!amplemarketIntegration || amplemarketIntegration.status !== "connected") {
+          return [];
+        }
+        const apiKey = (amplemarketIntegration.config as any)?.apiKey;
+        if (!apiKey) return [];
+        
+        try {
+          const response = await axios.get("https://api.amplemarket.com/v1/lists", {
+            headers: { "X-Api-Key": apiKey },
+          });
+          return response.data.lists?.map((l: any) => ({
+            id: l.id,
+            name: l.name,
+            contactCount: l.contact_count || l.size || 0,
+          })) || [];
+        } catch (error) {
+          console.error("Failed to fetch Amplemarket lists:", error);
+          return [];
+        }
       }),
 
     getAmplemarketSequences: protectedProcedure
       .query(async ({ ctx }) => {
-        // Mock data - in production, fetch from Amplemarket API
-        return [
-          { id: "seq1", name: "Cold Outreach - SaaS" },
-          { id: "seq2", name: "Follow-up Sequence" },
-          { id: "seq3", name: "Re-engagement Campaign" },
-        ];
+        const integrations = await db.getIntegrationsByTenant(ctx.user.tenantId);
+        const amplemarketIntegration = integrations.find((i: any) => i.provider === "amplemarket");
+        if (!amplemarketIntegration || amplemarketIntegration.status !== "connected") {
+          return [];
+        }
+        const apiKey = (amplemarketIntegration.config as any)?.apiKey;
+        if (!apiKey) return [];
+        
+        try {
+          const response = await axios.get("https://api.amplemarket.com/v1/sequences", {
+            headers: { "X-Api-Key": apiKey },
+          });
+          return response.data.sequences?.map((s: any) => ({
+            id: s.id,
+            name: s.name || s.title,
+          })) || [];
+        } catch (error) {
+          console.error("Failed to fetch Amplemarket sequences:", error);
+          return [];
+        }
       }),
     
     listAmplemarketAccounts: protectedProcedure
@@ -1904,6 +1950,31 @@ Generate a subject line and email body. Format your response as JSON with "subje
       .mutation(async ({ ctx }) => {
         const { syncApolloEngagements } = await import("./apollo");
         return syncApolloEngagements(ctx.user.tenantId, ctx.user.id);
+      }),
+
+    getSyncHistory: protectedProcedure
+      .query(async ({ ctx }) => {
+        return db.getSyncHistory(ctx.user.tenantId);
+      }),
+
+    getConflicts: protectedProcedure
+      .query(async ({ ctx }) => {
+        // Mock conflicts for now - in production, fetch from conflicts table
+        return [];
+      }),
+
+    resolveConflict: protectedProcedure
+      .input(z.object({
+        conflictId: z.string(),
+        choice: z.enum(["crm", "amplemarket", "merge"]),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        // TODO: Implement conflict resolution logic
+        // 1. Fetch conflict record
+        // 2. Apply choice (keep CRM, keep Amplemarket, or merge)
+        // 3. Update the record in database
+        // 4. Mark conflict as resolved
+        return { success: true };
       }),
   }),
   

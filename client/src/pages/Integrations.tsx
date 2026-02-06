@@ -86,11 +86,16 @@ export default function Integrations() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Integrations</h1>
-        <p className="text-muted-foreground mt-2">
-          Connect external services to sync data automatically
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Integrations</h1>
+          <p className="text-muted-foreground mt-2">
+            Connect external services to sync data automatically
+          </p>
+        </div>
+        <Button variant="outline" asChild>
+          <a href="/sync-history">View Sync History</a>
+        </Button>
       </div>
 
       {isLoading ? (
