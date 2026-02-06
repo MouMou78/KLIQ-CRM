@@ -1889,7 +1889,10 @@ Generate a subject line and email body. Format your response as JSON with "subje
       }),
 
     getAmplemarketLists: protectedProcedure
-      .query(async ({ ctx }) => {
+      .input(z.object({
+        userEmail: z.string().optional(),
+      }).optional())
+      .query(async ({ input, ctx }) => {
         const integrations = await db.getIntegrationsByTenant(ctx.user.tenantId);
         const amplemarketIntegration = integrations.find((i: any) => i.provider === "amplemarket");
         if (!amplemarketIntegration || amplemarketIntegration.status !== "connected") {
@@ -1905,11 +1908,22 @@ Generate a subject line and email body. Format your response as JSON with "subje
           const client = createAmplemarketClient(apiKey);
           const data = await client.getLists();
           
-          return data.lead_lists?.map((l: any) => ({
+          let lists = data.lead_lists || [];
+          
+          // Filter by user email if provided
+          if (input?.userEmail) {
+            lists = lists.filter((l: any) => 
+              l.owner === input.userEmail || l.shared === true
+            );
+          }
+          
+          return lists.map((l: any) => ({
             id: l.id,
             name: l.name,
-            contactCount: l.contact_count || l.size || 0,
-          })) || [];
+            owner: l.owner,
+            shared: l.shared,
+            contactCount: null, // Count not available in list endpoint
+          }));
         } catch (error: any) {
           if (error.response?.status === 401) {
             throw new TRPCError({ 
@@ -1925,7 +1939,10 @@ Generate a subject line and email body. Format your response as JSON with "subje
       }),
 
     getAmplemarketSequences: protectedProcedure
-      .query(async ({ ctx }) => {
+      .input(z.object({
+        userEmail: z.string().optional(),
+      }).optional())
+      .query(async ({ input, ctx }) => {
         const integrations = await db.getIntegrationsByTenant(ctx.user.tenantId);
         const amplemarketIntegration = integrations.find((i: any) => i.provider === "amplemarket");
         if (!amplemarketIntegration || amplemarketIntegration.status !== "connected") {
@@ -1941,10 +1958,20 @@ Generate a subject line and email body. Format your response as JSON with "subje
           const client = createAmplemarketClient(apiKey);
           const data = await client.getSequences();
           
-          return data.sequences?.map((s: any) => ({
+          let sequences = data.sequences || [];
+          
+          // Filter by user email if provided
+          if (input?.userEmail) {
+            sequences = sequences.filter((s: any) => 
+              s.created_by_user_email === input.userEmail
+            );
+          }
+          
+          return sequences.map((s: any) => ({
             id: s.id,
             name: s.name || s.title,
-          })) || [];
+            createdBy: s.created_by_user_email,
+          }));
         } catch (error: any) {
           if (error.response?.status === 401) {
             throw new TRPCError({ 

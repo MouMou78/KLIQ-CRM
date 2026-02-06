@@ -2205,3 +2205,13 @@
 - [x] Verify granted scopes include calendar.readonly
 - [x] Map API errors (401/403/404) to actionable UI messages
 - [x] Test that events load immediately after connecting calendar
+
+## Amplemarket User Filtering and Contact Count Fix
+- [x] Inspect Amplemarket API responses for lists and sequences (identify owner/user fields and count fields)
+- [x] Update backend endpoints to accept userEmail parameter
+- [x] Filter lists/sequences by selected user and include shared lists
+- [x] Fix contact count mapping - return null when unavailable
+- [x] Update frontend to clear state and refetch on user selection
+- [x] Pass userEmail parameter in API calls
+- [x] Test user selection triggers proper filtering
+- [x] Verify contact counts show "unavailable" instead of "0 contacts"

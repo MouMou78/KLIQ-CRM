@@ -20,6 +20,7 @@ export function AmplemarketConfigDialog({ open, onOpenChange, currentConfig, onS
   const [syncSchedule, setSyncSchedule] = useState(currentConfig?.syncSchedule || "manual");
   const [conflictStrategy, setConflictStrategy] = useState(currentConfig?.conflictStrategy || "keep_crm");
   const [selectedUserId, setSelectedUserId] = useState(currentConfig?.userId || "");
+  const [selectedUserEmail, setSelectedUserEmail] = useState<string | undefined>(undefined);
   const [selectedLists, setSelectedLists] = useState<string[]>(currentConfig?.selectedLists || []);
   const [selectedSequences, setSelectedSequences] = useState<string[]>(currentConfig?.selectedSequences || []);
 
@@ -39,15 +40,21 @@ export function AmplemarketConfigDialog({ open, onOpenChange, currentConfig, onS
     retry: false,
   });
 
-  const { data: amplemarketLists, isLoading: loadingLists, error: listsError } = trpc.integrations.getAmplemarketLists.useQuery(undefined, {
-    enabled: open,
-    retry: false,
-  });
+  const { data: amplemarketLists, isLoading: loadingLists, error: listsError } = trpc.integrations.getAmplemarketLists.useQuery(
+    selectedUserEmail ? { userEmail: selectedUserEmail } : undefined,
+    {
+      enabled: open,
+      retry: false,
+    }
+  );
 
-  const { data: amplemarketSequences, isLoading: loadingSequences, error: sequencesError } = trpc.integrations.getAmplemarketSequences.useQuery(undefined, {
-    enabled: open,
-    retry: false,
-  });
+  const { data: amplemarketSequences, isLoading: loadingSequences, error: sequencesError } = trpc.integrations.getAmplemarketSequences.useQuery(
+    selectedUserEmail ? { userEmail: selectedUserEmail } : undefined,
+    {
+      enabled: open,
+      retry: false,
+    }
+  );
 
   const handleSave = () => {
     updateConfig.mutate({
@@ -91,7 +98,19 @@ export function AmplemarketConfigDialog({ open, onOpenChange, currentConfig, onS
           {/* User Account Selection */}
           <div className="space-y-2">
             <Label>Amplemarket User Account</Label>
-            <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+            <Select value={selectedUserId} onValueChange={(value) => {
+              setSelectedUserId(value);
+              // Clear lists and sequences when user changes
+              setSelectedLists([]);
+              setSelectedSequences([]);
+              // Set user email for filtering
+              if (value === "all") {
+                setSelectedUserEmail(undefined);
+              } else {
+                const user = amplemarketUsers?.find((u: any) => u.id === value);
+                setSelectedUserEmail(user?.email);
+              }
+            }}>
               <SelectTrigger>
                 <SelectValue placeholder={loadingUsers ? "Loading users..." : "Select user account"} />
               </SelectTrigger>
@@ -201,7 +220,11 @@ export function AmplemarketConfigDialog({ open, onOpenChange, currentConfig, onS
                           }}
                         />
                         <label htmlFor={`list-${list.id}`} className="text-sm">
-                          {list.name} ({list.contactCount} contacts)
+                          {list.name}
+                          {list.shared && <span className="text-xs text-muted-foreground ml-1">(Shared)</span>}
+                          <span className="text-xs text-muted-foreground ml-1">
+                            {list.contactCount !== null ? `(${list.contactCount} contacts)` : '(count unavailable)'}
+                          </span>
                         </label>
                       </div>
                     ))}
