@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { Home, LogOut, PanelLeft, Users, Calendar, Settings, BarChart3, TrendingUp, Sparkles, Building2, UserCircle, Zap, Mail, Sliders, Activity, Wand2, ChevronDown, Target, Send, LineChart, MessageSquare, Bell, Workflow, History, Store, Moon, Sun, Monitor } from "lucide-react";
+import { Home, LogOut, PanelLeft, Users, Calendar, Settings, BarChart3, TrendingUp, Sparkles, Building2, UserCircle, Zap, Mail, Sliders, Activity, Wand2, ChevronDown, Target, Send, LineChart, MessageSquare, Bell, Workflow, History, Store, Moon, Sun, SunMoon, Shield, Brain } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -39,7 +39,8 @@ const menuItems = [
   { icon: Building2, label: "Accounts", path: "/accounts" },
   { icon: MessageSquare, label: "Team Chat", path: "/chat" },
   { icon: Calendar, label: "Events", path: "/events" },
-  { icon: Sparkles, label: "AI Assistant", path: "/ai-assistant" },
+  { icon: Calendar, label: "Book Demo", path: "/calendar/book" },
+
 ];
 
 const engagementItems = [
@@ -63,11 +64,13 @@ const settingsItems = [
   { icon: Target, label: "Lead Scoring", path: "/scoring-settings" },
 ];
 
-const amplemarketItems = [
-  { icon: Target, label: "Leads", path: "/amplemarket/leads" },
-  { icon: Building2, label: "Accounts", path: "/amplemarket/accounts" },
-  { icon: UserCircle, label: "People", path: "/amplemarket/people" },
+const adminItems = [
+  { icon: Brain, label: "Avery Insights", path: "/ai/insights" },
+  { icon: Shield, label: "Role Management", path: "/admin/roles" },
+  { icon: Users, label: "User Management", path: "/admin/users" },
 ];
+
+
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
 const DEFAULT_WIDTH = 280;
@@ -167,7 +170,7 @@ function ThemeToggle() {
     >
       {theme === "light" && <Sun className="h-4 w-4" />}
       {theme === "dark" && <Moon className="h-4 w-4" />}
-      {theme === "system" && <Monitor className="h-4 w-4" />}
+      {theme === "system" && <SunMoon className="h-4 w-4" />}
       <span className="sr-only">Toggle theme</span>
     </Button>
   );
@@ -187,6 +190,7 @@ function DashboardLayoutContent({
   setSidebarWidth,
 }: DashboardLayoutContentProps) {
   const { user, logout } = useAuth();
+  const { getRoleName } = usePermissions();
   const [location, setLocation] = useLocation();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
@@ -262,7 +266,7 @@ function DashboardLayoutContent({
               </button>
               {!isCollapsed ? (
                 <div className="flex items-center justify-center min-w-0 flex-1">
-                  <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663306545399/bAnPKgcDFtgkNbmT.png" alt="White Label Consultancy" className="h-20 w-auto object-contain dark:brightness-200 dark:contrast-150 dark:saturate-110" />
+                  <img src="/kliq_logo.png" alt="KLIQ" className="h-8 w-auto object-contain" />
                 </div>
               ) : null}
             </div>
@@ -304,7 +308,10 @@ function DashboardLayoutContent({
                         <SidebarMenuSubItem key={item.path}>
                           <SidebarMenuSubButton
                             isActive={isActive}
-                            onClick={() => setLocation(item.path)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLocation(item.path);
+                            }}
                             className="h-9"
                           >
                             <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
@@ -332,7 +339,10 @@ function DashboardLayoutContent({
                         <SidebarMenuSubItem key={item.path}>
                           <SidebarMenuSubButton
                             isActive={isActive}
-                            onClick={() => setLocation(item.path)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLocation(item.path);
+                            }}
                             className="h-9"
                           >
                             <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
@@ -345,33 +355,7 @@ function DashboardLayoutContent({
                 </details>
               </SidebarMenuItem>
               
-              {/* Amplemarket Submenu */}
-              <SidebarMenuItem>
-                <details className="group/amplemarket">
-                  <summary className="flex items-center gap-2 h-10 px-2 rounded-md hover:bg-accent transition-colors cursor-pointer list-none">
-                    <Building2 className="h-4 w-4" />
-                    <span className="flex-1 font-normal">Amplemarket</span>
-                    <ChevronDown className="h-4 w-4 transition-transform group-open/amplemarket:rotate-180" />
-                  </summary>
-                  <SidebarMenuSub className="ml-4 mt-1">
-                    {amplemarketItems.map(item => {
-                      const isActive = location === item.path;
-                      return (
-                        <SidebarMenuSubItem key={item.path}>
-                          <SidebarMenuSubButton
-                            isActive={isActive}
-                            onClick={() => setLocation(item.path)}
-                            className="h-9"
-                          >
-                            <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
-                            <span>{item.label}</span>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      );
-                    })}
-                  </SidebarMenuSub>
-                </details>
-              </SidebarMenuItem>
+
 
               {/* Settings Submenu */}
               <SidebarMenuItem>
@@ -388,7 +372,10 @@ function DashboardLayoutContent({
                         <SidebarMenuSubItem key={item.path}>
                           <SidebarMenuSubButton
                             isActive={isActive}
-                            onClick={() => setLocation(item.path)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLocation(item.path);
+                            }}
                             className="h-9"
                           >
                             <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
@@ -400,6 +387,36 @@ function DashboardLayoutContent({
                   </SidebarMenuSub>
                 </details>
               </SidebarMenuItem>
+
+              {/* Admin Submenu - Only for owners */}
+              {(user?.role === 'owner' || user?.role === 'admin') && (
+                <SidebarMenuItem>
+                  <details className="group/admin">
+                    <summary className="flex items-center gap-2 h-10 px-2 rounded-md hover:bg-accent transition-colors cursor-pointer list-none">
+                      <Shield className="h-4 w-4" />
+                      <span className="flex-1 font-normal">Admin</span>
+                      <ChevronDown className="h-4 w-4 transition-transform group-open/admin:rotate-180" />
+                    </summary>
+                    <SidebarMenuSub className="ml-4 mt-1">
+                      {adminItems.map(item => {
+                        const isActive = location === item.path;
+                        return (
+                          <SidebarMenuSubItem key={item.path}>
+                            <SidebarMenuSubButton
+                              isActive={isActive}
+                              onClick={() => setLocation(item.path)}
+                              className="h-9"
+                            >
+                              <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
+                              <span>{item.label}</span>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        );
+                      })}
+                    </SidebarMenuSub>
+                  </details>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarContent>
 
@@ -418,6 +435,9 @@ function DashboardLayoutContent({
                     </p>
                     <p className="text-xs text-muted-foreground truncate mt-1.5">
                       {user?.email || "-"}
+                    </p>
+                    <p className="text-xs text-[rgb(var(--kliq-green))] font-medium mt-1">
+                      {getRoleName()}
                     </p>
                   </div>
                 </button>

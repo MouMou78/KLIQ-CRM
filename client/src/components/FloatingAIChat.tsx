@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Sparkles, X, Minimize2, Send, Mic, MicOff } from "lucide-react";
+import { Sparkles, X, Minimize2, Send, Mic, MicOff, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -46,6 +46,7 @@ const getQuickActionsForPage = (page: string) => {
 export default function FloatingAIChat({ contextData }: FloatingAIChatProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false); // New state for full-page mode
   const [messages, setMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -54,9 +55,21 @@ export default function FloatingAIChat({ contextData }: FloatingAIChatProps) {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isRecording, setIsRecording] = useState(false);
   const [suggestions, setSuggestions] = useState<Array<{ type: string; label: string; action: string }>>([]);
+  const [showButton, setShowButton] = useState(true);
   const recognitionRef = useRef<any>(null);
   const buttonRef = useRef<HTMLDivElement>(null);
   const [location] = useLocation();
+
+  // Fade button after 3 seconds if not clicked
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!isOpen) {
+        setShowButton(false);
+      }
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [isOpen]);
 
   const chatMutation = trpc.assistant.chat.useMutation();
   const { refetch: refetchSuggestions } = trpc.assistant.getSuggestions.useQuery(
@@ -64,10 +77,16 @@ export default function FloatingAIChat({ contextData }: FloatingAIChatProps) {
     { enabled: false }
   );
 
+  // Fetch insights for context
+  const { data: insights } = trpc.ai.getInsights.useQuery(
+    { limit: 10 },
+    { enabled: isOpen }
+  );
+
   // Initialize with context-aware greeting
   useEffect(() => {
     if (isOpen && messages.length === 0) {
-      let greeting = "Hi! I'm your AI assistant. ";
+      let greeting = "Hi! I'm Avery, your AI assistant. ";
       if (contextData?.contactName) {
         greeting += `I can see you're viewing ${contextData.contactName}'s profile. `;
       } else if (contextData?.page) {
@@ -89,12 +108,30 @@ export default function FloatingAIChat({ contextData }: FloatingAIChatProps) {
     setIsLoading(true);
 
     try {
-      // Add context to the message
+      // Add context to the message including AI insights
       let contextualMessage = messageToSend;
+      let contextParts = [];
+      
       if (contextData?.contactName) {
-        contextualMessage = `[Context: Viewing contact ${contextData.contactName}] ${messageToSend}`;
+        contextParts.push(`Viewing contact ${contextData.contactName}`);
       } else if (contextData?.page) {
-        contextualMessage = `[Context: On ${contextData.page} page] ${messageToSend}`;
+        contextParts.push(`On ${contextData.page} page`);
+      }
+      
+      // Add relevant AI insights to context
+      if (insights && insights.length > 0) {
+        const relevantInsights = insights
+          .filter(i => i.status === 'active')
+          .slice(0, 3)
+          .map(i => `${i.title}: ${i.description}`)
+          .join('; ');
+        if (relevantInsights) {
+          contextParts.push(`Recent AI insights: ${relevantInsights}`);
+        }
+      }
+      
+      if (contextParts.length > 0) {
+        contextualMessage = `[Context: ${contextParts.join(' | ')}] ${messageToSend}`;
       }
 
       const result = await chatMutation.mutateAsync({
@@ -201,46 +238,169 @@ export default function FloatingAIChat({ contextData }: FloatingAIChatProps) {
 
   const quickActions = getQuickActionsForPage(location);
 
+  // Render messages component (shared between floating and expanded)
+  const renderMessages = () => (
+    <div className="space-y-3">
+      {/* Quick Actions - Only show at start */}
+      {messages.length <= 1 && (
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">Quick asks:</p>
+          <div className="flex flex-wrap gap-1.5">
+            {quickActions.map((action, index) => (
+              <Badge
+                key={index}
+                variant="outline"
+                className="cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors text-xs px-2 py-1"
+                onClick={() => handleQuickAction(action)}
+              >
+                {action}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Messages */}
+      {messages.map((message, index) => (
+        <div
+          key={index}
+          className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+        >
+          <div className={`max-w-[85%] p-2.5 rounded-lg text-sm ${
+            message.role === "user" 
+              ? "bg-primary text-primary-foreground" 
+              : "bg-muted"
+          }`}>
+            {message.role === "assistant" ? (
+              <Streamdown>{message.content}</Streamdown>
+            ) : (
+              <p className="whitespace-pre-wrap">{message.content}</p>
+            )}
+          </div>
+        </div>
+      ))}
+      
+      {isLoading && (
+        <div className="flex justify-start">
+          <div className="max-w-[85%] p-2.5 rounded-lg bg-muted">
+            <div className="flex items-center gap-1.5">
+              <div className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" />
+              <div className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:0.2s]" />
+              <div className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:0.4s]" />
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Smart Suggestions */}
+      {suggestions.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">Suggested actions:</p>
+          <div className="flex flex-wrap gap-1.5">
+            {suggestions.map((suggestion, index) => (
+              <Badge
+                key={index}
+                variant="secondary"
+                className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors text-xs px-2 py-1"
+                onClick={() => {
+                  window.location.href = suggestion.action;
+                }}
+              >
+                {suggestion.label}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  // Render input component (shared between floating and expanded)
+  const renderInput = () => (
+    <div className="flex gap-2">
+      <Input
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyPress={handleKeyPress}
+        placeholder="Ask me anything..."
+        disabled={isLoading}
+        className="flex-1 text-sm h-9"
+      />
+      <Button 
+        onClick={handleVoiceInput}
+        disabled={isLoading}
+        size="sm"
+        variant={isRecording ? "default" : "outline"}
+        className={`h-9 w-9 p-0 ${isRecording ? "animate-pulse" : ""}`}
+      >
+        {isRecording ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
+      </Button>
+      <Button 
+        onClick={() => handleSend()} 
+        disabled={!input.trim() || isLoading}
+        size="sm"
+        className="h-9 w-9 p-0"
+      >
+        <Send className="h-3.5 w-3.5" />
+      </Button>
+    </div>
+  );
+
   return (
     <>
-      {/* Floating Button */}
-      <div
-        ref={buttonRef}
-        className="fixed z-50 cursor-move"
-        style={{ left: `${position.x}px`, top: `${position.y}px` }}
-        onMouseDown={handleMouseDown}
-      >
-        <Button
-          size="lg"
-          className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all"
-          onClick={(e) => {
-            e.stopPropagation();
-            if (!isDragging) {
-              setIsOpen(!isOpen);
-              setIsMinimized(false);
-            }
-          }}
+      {/* Floating Button - Hide when expanded */}
+      {!isExpanded && (
+        <div
+          ref={buttonRef}
+          className="fixed z-50 cursor-move"
+          style={{ left: `${position.x}px`, top: `${position.y}px` }}
+          onMouseDown={handleMouseDown}
         >
-          <Sparkles className="h-6 w-6" />
-        </Button>
-      </div>
+          <Button
+            size="lg"
+            className={`h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-500 bg-[#1C3838] hover:bg-[#2D4A4A] text-white ${
+              showButton ? 'opacity-100' : 'opacity-30'
+            }`}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!isDragging) {
+                setIsOpen(!isOpen);
+                setIsMinimized(false);
+                setShowButton(true); // Keep button visible after click
+              }
+            }}
+          >
+            <Sparkles className="h-6 w-6" />
+          </Button>
+        </div>
+      )}
 
-      {/* Chat Panel */}
-      {isOpen && (
+      {/* Floating Chat Panel */}
+      {isOpen && !isExpanded && (
         <div className={`fixed right-4 bottom-4 z-40 w-96 transition-all ${isMinimized ? 'h-14' : 'h-[600px]'}`}>
           <Card className="h-full flex flex-col shadow-2xl">
             {/* Header */}
             <div className="flex items-center justify-between p-3 border-b bg-primary/5">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary" />
-                <h3 className="font-semibold text-sm">AI Assistant</h3>
+                <h3 className="font-semibold text-sm">Avery</h3>
               </div>
               <div className="flex gap-1">
                 <Button
                   variant="ghost"
                   size="sm"
+                  onClick={() => setIsExpanded(true)}
+                  className="h-7 w-7 p-0"
+                  title="Expand to full screen"
+                >
+                  <Maximize2 className="h-3 w-3" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setIsMinimized(!isMinimized)}
                   className="h-7 w-7 p-0"
+                  title="Minimize"
                 >
                   <Minimize2 className="h-3 w-3" />
                 </Button>
@@ -249,6 +409,7 @@ export default function FloatingAIChat({ contextData }: FloatingAIChatProps) {
                   size="sm"
                   onClick={() => setIsOpen(false)}
                   className="h-7 w-7 p-0"
+                  title="Close"
                 >
                   <X className="h-3 w-3" />
                 </Button>
@@ -259,114 +420,77 @@ export default function FloatingAIChat({ contextData }: FloatingAIChatProps) {
               <>
                 {/* Messages */}
                 <ScrollArea className="flex-1 p-3">
-                  <div className="space-y-3">
-                    {/* Quick Actions - Only show at start */}
-                    {messages.length <= 1 && (
-                      <div className="space-y-2">
-                        <p className="text-xs text-muted-foreground">Quick asks:</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {quickActions.map((action, index) => (
-                            <Badge
-                              key={index}
-                              variant="outline"
-                              className="cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors text-xs px-2 py-1"
-                              onClick={() => handleQuickAction(action)}
-                            >
-                              {action}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Messages */}
-                    {messages.map((message, index) => (
-                      <div
-                        key={index}
-                        className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-                      >
-                        <div className={`max-w-[85%] p-2.5 rounded-lg text-sm ${
-                          message.role === "user" 
-                            ? "bg-primary text-primary-foreground" 
-                            : "bg-muted"
-                        }`}>
-                          {message.role === "assistant" ? (
-                            <Streamdown>{message.content}</Streamdown>
-                          ) : (
-                            <p className="whitespace-pre-wrap">{message.content}</p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {isLoading && (
-                      <div className="flex justify-start">
-                        <div className="max-w-[85%] p-2.5 rounded-lg bg-muted">
-                          <div className="flex items-center gap-1.5">
-                            <div className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" />
-                            <div className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:0.2s]" />
-                            <div className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:0.4s]" />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Smart Suggestions */}
-                    {suggestions.length > 0 && (
-                      <div className="space-y-2">
-                        <p className="text-xs text-muted-foreground">Suggested actions:</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {suggestions.map((suggestion, index) => (
-                            <Badge
-                              key={index}
-                              variant="secondary"
-                              className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors text-xs px-2 py-1"
-                              onClick={() => {
-                                window.location.href = suggestion.action;
-                              }}
-                            >
-                              {suggestion.label}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  {renderMessages()}
                 </ScrollArea>
 
                 {/* Input */}
                 <div className="p-3 border-t">
-                  <div className="flex gap-2">
-                    <Input
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      placeholder="Ask me anything..."
-                      disabled={isLoading}
-                      className="flex-1 text-sm h-9"
-                    />
-                    <Button 
-                      onClick={handleVoiceInput}
-                      disabled={isLoading}
-                      size="sm"
-                      variant={isRecording ? "default" : "outline"}
-                      className={`h-9 w-9 p-0 ${isRecording ? "animate-pulse" : ""}`}
-                    >
-                      {isRecording ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
-                    </Button>
-                    <Button 
-                      onClick={() => handleSend()} 
-                      disabled={!input.trim() || isLoading}
-                      size="sm"
-                      className="h-9 w-9 p-0"
-                    >
-                      <Send className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
+                  {renderInput()}
                 </div>
               </>
             )}
           </Card>
+        </div>
+      )}
+
+      {/* Full-Page Expanded View */}
+      {isExpanded && (
+        <div className="fixed inset-0 z-50 bg-background">
+          <div className="h-full flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <div className="flex items-center gap-3">
+                <Sparkles className="h-6 w-6 text-primary" />
+                <h1 className="text-2xl font-bold">Avery</h1>
+                <Badge variant="secondary" className="text-xs">AI Assistant</Badge>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsExpanded(false)}
+                >
+                  <Minimize2 className="h-4 w-4 mr-2" />
+                  Exit Full Screen
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setIsExpanded(false);
+                    setIsOpen(false);
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Main Content Area */}
+            <div className="flex-1 flex overflow-hidden">
+              {/* Conversation History Sidebar (Future Enhancement) */}
+              {/* <div className="w-64 border-r p-4">
+                <h3 className="font-semibold mb-4">Conversation History</h3>
+              </div> */}
+
+              {/* Main Chat Area */}
+              <div className="flex-1 flex flex-col">
+                {/* Messages */}
+                <ScrollArea className="flex-1 p-6">
+                  <div className="max-w-4xl mx-auto">
+                    {renderMessages()}
+                  </div>
+                </ScrollArea>
+
+                {/* Input */}
+                <div className="border-t p-4 bg-muted/30">
+                  <div className="max-w-4xl mx-auto">
+                    {renderInput()}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </>
