@@ -2,6 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { customAuthRouter } from "./routers/customAuthRouter";
+import { calendarRouter } from "./routers/calendarRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
@@ -18,6 +19,7 @@ import axios from "axios";
 export const appRouter = router({
   system: systemRouter,
   customAuth: customAuthRouter,
+  calendar: calendarRouter,
   
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -4908,6 +4910,13 @@ Generate a subject line and email body. Format your response as JSON with "subje
         
         return { total, processed, failed, pending };
       }),
+  }),
+
+  users: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      const users = await db.getAllUsersByTenant(ctx.user?.tenantId || 'default');
+      return users;
+    }),
   }),
 
 });

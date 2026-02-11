@@ -1,4 +1,4 @@
-import { eq, and, or, desc, asc, sql } from "drizzle-orm";
+import { eq, and, or, desc, asc, sql, gte, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   tenants, Tenant, InsertTenant,
@@ -326,6 +326,27 @@ export async function getEventsByTenant(tenantId: string): Promise<Event[]> {
   if (!db) return [];
 
   return db.select().from(events).where(eq(events.tenantId, tenantId)).orderBy(desc(events.createdAt));
+}
+
+export async function getEventsByUserAndDate(userId: number, date: Date): Promise<Event[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const startOfDay = new Date(date);
+  startOfDay.setHours(0, 0, 0, 0);
+  
+  const endOfDay = new Date(date);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  return db.select().from(events)
+    .where(
+      and(
+        eq(events.userId, userId.toString()),
+        gte(events.startTime, startOfDay),
+        lte(events.startTime, endOfDay)
+      )
+    )
+    .orderBy(events.startTime);
 }
 
 // ============ INTEGRATIONS ============

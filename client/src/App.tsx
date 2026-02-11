@@ -44,6 +44,7 @@ import ActivityFeed from "./pages/ActivityFeed";
 import EmailGenerator from "./pages/EmailGenerator";
 import ScoringSettings from "./pages/ScoringSettings";
 import Chat from "./pages/Chat";
+import BookDemo from "./pages/BookDemo";
 import DashboardLayout from "./components/DashboardLayout";
 import FloatingAIChat from "./components/FloatingAIChat";
 import { KeyboardShortcuts } from "./components/KeyboardShortcuts";
@@ -160,6 +161,12 @@ function Router() {
             <EventDetail eventId={params.id} />
           </DashboardLayout>
         )}
+      </Route>
+      
+      <Route path="/calendar/book">
+        <DashboardLayout>
+          <BookDemo />
+        </DashboardLayout>
       </Route>
       
       <Route path="/integrations">
