@@ -163,8 +163,8 @@ export async function setup2FA(userId: string): Promise<Setup2FAResult> {
   
   // Generate 2FA secret
   const secret = speakeasy.generateSecret({
-    name: `1twenty CRM (${user.email})`,
-    issuer: '1twenty CRM',
+    name: `CRM (${user.email})`,
+    issuer: 'CRM',
   });
   
   // Generate QR code

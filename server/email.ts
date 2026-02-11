@@ -44,11 +44,11 @@ export async function sendPasswordResetEmail(
   const mailOptions = {
     from: process.env.SMTP_USER,
     to,
-    subject: "Password Reset Request - 1twenty CRM",
+    subject: "Password Reset Request - CRM",
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Password Reset Request</h2>
-        <p>You requested to reset your password for your 1twenty CRM account.</p>
+        <p>You requested to reset your password for your CRM account.</p>
         <p>Click the link below to reset your password:</p>
         <p>
           <a href="${resetUrl}" style="background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
@@ -61,7 +61,7 @@ export async function sendPasswordResetEmail(
         <p>If you didn't request this, please ignore this email.</p>
         <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">
         <p style="color: #999; font-size: 12px;">
-          1twenty CRM - Customer Relationship Management<br>
+          CRM - Customer Relationship Management<br>
           This is an automated email, please do not reply.
         </p>
       </div>
@@ -82,10 +82,10 @@ export async function sendWelcomeEmail(
   const mailOptions = {
     from: process.env.SMTP_USER,
     to,
-    subject: "Welcome to 1twenty CRM!",
+    subject: "Welcome to CRM!",
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Welcome to 1twenty CRM, ${name}!</h2>
+        <h2>Welcome to CRM, ${name}!</h2>
         <p>Your account has been successfully created.</p>
         <p>You've set up two-factor authentication (2FA) to keep your account secure. Make sure to save your backup codes in a safe place.</p>
         <p>Get started by logging in and exploring your new CRM:</p>
@@ -98,7 +98,7 @@ export async function sendWelcomeEmail(
         <p>If you have any questions, feel free to reach out to our support team.</p>
         <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">
         <p style="color: #999; font-size: 12px;">
-          1twenty CRM - Customer Relationship Management<br>
+          CRM - Customer Relationship Management<br>
           This is an automated email, please do not reply.
         </p>
       </div>

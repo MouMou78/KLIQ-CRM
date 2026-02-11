@@ -262,7 +262,7 @@ function DashboardLayoutContent({
               </button>
               {!isCollapsed ? (
                 <div className="flex items-center justify-center min-w-0 flex-1">
-                  <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663306545399/bAnPKgcDFtgkNbmT.png" alt="1twenty Consultancy" className="h-20 w-auto object-contain dark:brightness-200 dark:contrast-150 dark:saturate-110" />
+                  <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663306545399/bAnPKgcDFtgkNbmT.png" alt="White Label Consultancy" className="h-20 w-auto object-contain dark:brightness-200 dark:contrast-150 dark:saturate-110" />
                 </div>
               ) : null}
             </div>

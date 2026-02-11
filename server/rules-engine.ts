@@ -1,5 +1,5 @@
 /**
- * Rules Engine for 1twenty CRM
+ * Rules Engine for CRM
  * Handles automated workflow triggers based on moments
  */
 

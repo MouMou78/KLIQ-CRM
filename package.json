@@ -1,5 +1,5 @@
 {
-  "name": "1twenty-crm",
+  "name": "white-label-crm",
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
@@ -11,6 +11,7 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "seed:deals": "NODE_ENV=development tsx seed-deals.mjs",
+    "seed:demo": "NODE_ENV=development tsx seed-demo-user.mjs",
     "db:push": "drizzle-kit generate && drizzle-kit migrate"
   },
   "dependencies": {

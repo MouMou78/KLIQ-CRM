@@ -1,6 +1,6 @@
 # Client Onboarding Guide
 
-This guide walks you through setting up a new client instance of the 1twenty CRM white-label template.
+This guide walks you through setting up a new client instance of the White Label CRM white-label template.
 
 ## Prerequisites
 

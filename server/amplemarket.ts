@@ -888,8 +888,10 @@ export async function syncAmplemarket(
     const leadsProcessed = syncResult.leads_processed_total || 0;
     const leadsWithOwner = syncResult.leads_with_owner_field || 0;
     const leadsMatchingOwner = syncResult.leads_matching_owner || 0;
-    const created = syncResult.leads_created || 0;
-    const updated = syncResult.leads_updated || 0;
+    const leadsWrongOwner = syncResult.leads_wrong_owner || 0;
+    const leadsCreated = syncResult.leads_created || 0;
+    const leadsUpdated = syncResult.leads_updated || 0;
+    const leadsSkipped = syncResult.leads_skipped || 0;
     
     // Build stable response contract
     const response = {

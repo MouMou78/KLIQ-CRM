@@ -1,6 +1,6 @@
 # Customization Guide
 
-This guide details all customization points in the 1twenty CRM white-label template.
+This guide details all customization points in the White Label CRM white-label template.
 
 ## Table of Contents
 
@@ -19,7 +19,7 @@ This guide details all customization points in the 1twenty CRM white-label templ
 
 **Location:** Environment variable  
 **Variable:** `VITE_APP_TITLE`  
-**Default:** `"1twenty CRM"`  
+**Default:** `"White Label CRM"`  
 **How to change:**
 
 ```bash

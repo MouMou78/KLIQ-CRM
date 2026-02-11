@@ -1,4 +1,4 @@
-# 1twenty CRM White Label Template
+# White Label CRM White Label Template
 
 A production-ready, white-label CRM template built with React 19, tRPC, and Tailwind CSS. Deploy customized CRM instances for multiple clients with ease.
 

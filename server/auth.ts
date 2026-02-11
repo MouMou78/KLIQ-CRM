@@ -30,7 +30,7 @@ export function generateTwoFactorSecret(): string {
  * Generate a QR code URL for TOTP setup
  */
 export async function generateQRCode(email: string, secret: string): Promise<string> {
-  const otpauth = `otpauth://totp/1twenty CRM:${encodeURIComponent(email)}?secret=${secret}&issuer=1twenty CRM`;
+  const otpauth = `otpauth://totp/CRM:${encodeURIComponent(email)}?secret=${secret}&issuer=CRM`;
   return QRCode.toDataURL(otpauth);
 }
 

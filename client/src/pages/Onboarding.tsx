@@ -16,7 +16,7 @@ export default function Onboarding() {
 
   const steps = [
     {
-      title: "Welcome to 1twenty CRM",
+      title: "Welcome to CRM Template",
       content: "Your relationships are the foundation of your business. Let's help you nurture them.",
     },
     {

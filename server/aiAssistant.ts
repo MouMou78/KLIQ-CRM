@@ -99,7 +99,7 @@ async function gatherCRMContext(tenantId: number) {
 }
 
 function buildSystemPrompt(context: any): string {
-  return `You are an AI assistant for 1twenty CRM. You help users understand their CRM data, analyze their sales funnel, and answer questions about contacts, deals, and engagement metrics.
+  return `You are an AI assistant for CRM. You help users understand their CRM data, analyze their sales funnel, and answer questions about contacts, deals, and engagement metrics.
 
 **Current CRM Data:**
 
