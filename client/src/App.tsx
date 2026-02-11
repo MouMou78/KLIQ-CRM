@@ -55,6 +55,7 @@ import ResetPassword from "./pages/ResetPassword";
 import EmailAccounts from "./pages/EmailAccounts";
 import Campaigns from "./pages/Campaigns";
 import UserManagement from "./pages/UserManagement";
+import RoleManagement from "./pages/RoleManagement";
 import Accounts from "./pages/Accounts";
 import Settings from "./pages/Settings";
 import WebhookMonitor from "./pages/WebhookMonitor";
@@ -93,6 +94,12 @@ function Router() {
       <Route path="/admin/users">
         <DashboardLayout>
           <UserManagement />
+        </DashboardLayout>
+      </Route>
+      
+      <Route path="/admin/roles">
+        <DashboardLayout>
+          <RoleManagement />
         </DashboardLayout>
       </Route>
       
@@ -351,7 +358,9 @@ function Router() {
       </Route>
       
       <Route path="/analytics">
-        <Analytics />
+        <DashboardLayout>
+          <Analytics />
+        </DashboardLayout>
       </Route>
       
       <Route path="/reports">
