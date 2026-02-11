@@ -13,6 +13,14 @@ export function useAuth(options?: UseAuthOptions) {
     options ?? {};
   const utils = trpc.useUtils();
 
+  // BYPASS AUTH: Return mock user for development
+  const mockUser = {
+    id: 1,
+    email: "demo@kliq.io",
+    name: "Demo User",
+    role: "owner",
+  };
+
   const meQuery = trpc.customAuth.me.useQuery(undefined, {
     retry: false,
     refetchOnWindowFocus: false,
@@ -49,39 +57,35 @@ export function useAuth(options?: UseAuthOptions) {
   }, [logoutMutation, utils]);
 
   const state = useMemo(() => {
+    // BYPASS AUTH: Always return mock user
     localStorage.setItem(
       "manus-runtime-user-info",
-      JSON.stringify(meQuery.data)
+      JSON.stringify(mockUser)
     );
     return {
-      user: meQuery.data ?? null,
-      loading: meQuery.isLoading || logoutMutation.isPending,
-      error: meQuery.error ?? logoutMutation.error ?? null,
-      isAuthenticated: Boolean(meQuery.data),
+      user: mockUser,
+      loading: false,
+      error: null,
+      isAuthenticated: true,
     };
-  }, [
-    meQuery.data,
-    meQuery.error,
-    meQuery.isLoading,
-    logoutMutation.error,
-    logoutMutation.isPending,
-  ]);
+  }, []);
 
-  useEffect(() => {
-    if (!redirectOnUnauthenticated) return;
-    if (meQuery.isLoading || logoutMutation.isPending) return;
-    if (state.user) return;
-    if (typeof window === "undefined") return;
-    if (window.location.pathname === redirectPath) return;
-
-    window.location.href = redirectPath
-  }, [
-    redirectOnUnauthenticated,
-    redirectPath,
-    logoutMutation.isPending,
-    meQuery.isLoading,
-    state.user,
-  ]);
+  // BYPASS AUTH: Disable redirect
+  // useEffect(() => {
+  //   if (!redirectOnUnauthenticated) return;
+  //   if (meQuery.isLoading || logoutMutation.isPending) return;
+  //   if (state.user) return;
+  //   if (typeof window === "undefined") return;
+  //   if (window.location.pathname === redirectPath) return;
+  //
+  //   window.location.href = redirectPath
+  // }, [
+  //   redirectOnUnauthenticated,
+  //   redirectPath,
+  //   logoutMutation.isPending,
+  //   meQuery.isLoading,
+  //   state.user,
+  // ]);
 
   return {
     ...state,

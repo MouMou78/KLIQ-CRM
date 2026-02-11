@@ -94,13 +94,14 @@ export default function DashboardLayout({
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
   }, [sidebarWidth]);
 
-  // Check if user has completed onboarding
+  // BYPASS ONBOARDING: Auto-mark as completed
   useEffect(() => {
     if (user && !loading) {
-      const onboardingCompleted = localStorage.getItem("onboarding_completed");
-      if (!onboardingCompleted) {
-        setLocation("/onboarding");
-      }
+      localStorage.setItem("onboarding_completed", "true");
+      // const onboardingCompleted = localStorage.getItem("onboarding_completed");
+      // if (!onboardingCompleted) {
+      //   setLocation("/onboarding");
+      // }
     }
   }, [user, loading, setLocation]);
 
@@ -190,7 +191,6 @@ function DashboardLayoutContent({
   setSidebarWidth,
 }: DashboardLayoutContentProps) {
   const { user, logout } = useAuth();
-  const { getRoleName } = usePermissions();
   const [location, setLocation] = useLocation();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
@@ -437,7 +437,7 @@ function DashboardLayoutContent({
                       {user?.email || "-"}
                     </p>
                     <p className="text-xs text-[rgb(var(--kliq-green))] font-medium mt-1">
-                      {getRoleName()}
+                      {user?.role || 'Owner'}
                     </p>
                   </div>
                 </button>
