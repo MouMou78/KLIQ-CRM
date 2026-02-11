@@ -27,6 +27,8 @@ import AmplemarketLeads from "./pages/AmplemarketLeads";
 import { AmplemarketSync } from "./pages/AmplemarketSync";
 import AccountDetail from "./pages/AccountDetail";
 import AccountDetailPage from "./pages/AccountDetailPage";
+import AccountMerge from "./pages/AccountMerge";
+import AccountImport from "./pages/AccountImport";
 
 import BulkImport from "./pages/BulkImport";
 import Automation from "./pages/Automation";
@@ -119,6 +121,18 @@ function Router() {
       <Route path="/accounts">
         <DashboardLayout>
           <Accounts />
+        </DashboardLayout>
+      </Route>
+
+      <Route path="/accounts/merge">
+        <DashboardLayout>
+          <AccountMerge />
+        </DashboardLayout>
+      </Route>
+
+      <Route path="/accounts/import">
+        <DashboardLayout>
+          <AccountImport />
         </DashboardLayout>
       </Route>
       

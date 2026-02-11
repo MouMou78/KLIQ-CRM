@@ -3225,6 +3225,78 @@ Generate a subject line and email body. Format your response as JSON with "subje
         await db.deleteAccount(input.id);
         return { success: true };
       }),
+
+    merge: protectedProcedure
+      .input(z.object({
+        sourceAccountId: z.string(),
+        targetAccountId: z.string(),
+        mergedFields: z.record(z.any()),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { mergeAccounts } = await import("./merge");
+        return mergeAccounts(
+          input.sourceAccountId,
+          input.targetAccountId,
+          input.mergedFields,
+          ctx.user.tenantId
+        );
+      }),
+
+    parseCSV: protectedProcedure
+      .input(z.object({ content: z.string() }))
+      .mutation(async ({ input }) => {
+        const lines = input.content.split('\n').filter(l => l.trim());
+        const headers = lines[0].split(',').map(h => h.trim());
+        const preview = lines.slice(1, 4).map(line => {
+          const values = line.split(',');
+          const row: Record<string, string> = {};
+          headers.forEach((h, i) => { row[h] = values[i]?.trim() || ''; });
+          return row;
+        });
+        return { headers, rowCount: lines.length - 1, preview };
+      }),
+
+    importAccounts: protectedProcedure
+      .input(z.object({
+        content: z.string(),
+        mapping: z.record(z.string()),
+        skipDuplicates: z.boolean(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const lines = input.content.split('\n').filter(l => l.trim());
+        const headers = lines[0].split(',').map(h => h.trim());
+        let imported = 0;
+        let skipped = 0;
+
+        for (let i = 1; i < lines.length; i++) {
+          const values = lines[i].split(',');
+          const row: Record<string, string> = {};
+          headers.forEach((h, idx) => { row[h] = values[idx]?.trim() || ''; });
+
+          const accountData: any = { tenantId: ctx.user.tenantId };
+          Object.entries(input.mapping).forEach(([csvCol, field]) => {
+            if (field && row[csvCol]) accountData[field] = row[csvCol];
+          });
+
+          if (!accountData.name) continue;
+
+          try {
+            if (input.skipDuplicates) {
+              const existing = await db.getAccountsByTenant(ctx.user.tenantId);
+              if (existing.some((a: any) => a.name === accountData.name)) {
+                skipped++;
+                continue;
+              }
+            }
+            await db.createAccount(accountData);
+            imported++;
+          } catch (error) {
+            skipped++;
+          }
+        }
+
+        return { imported, skipped };
+      }),
   }),
   
   forecasting: router({
