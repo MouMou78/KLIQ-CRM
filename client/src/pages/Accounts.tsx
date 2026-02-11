@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Plus, Search, Building2, Users, Mail, Phone, X, Tag, UserPlus } from "lucide-react";
+import { Plus, Search, Building2, Users, Mail, Phone, X, Tag, UserPlus, Upload, GitMerge } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -109,13 +109,26 @@ export default function Accounts() {
             Manage your company accounts and organizations
           </p>
         </div>
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              New Account
+        <div className="flex gap-2">
+          <Link href="/accounts/merge">
+            <Button variant="outline">
+              <GitMerge className="w-4 h-4 mr-2" />
+              Merge
             </Button>
-          </DialogTrigger>
+          </Link>
+          <Link href="/accounts/import">
+            <Button variant="outline">
+              <Upload className="w-4 h-4 mr-2" />
+              Import
+            </Button>
+          </Link>
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                New Account
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Create New Account</DialogTitle>
@@ -167,6 +180,7 @@ export default function Accounts() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="mb-6">
