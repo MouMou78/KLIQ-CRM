@@ -359,7 +359,7 @@ export default function FloatingAIChat({ contextData }: FloatingAIChatProps) {
           <Button
             size="lg"
             className={`h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-500 bg-[#1C3838] hover:bg-[#2D4A4A] text-white ${
-              showButton ? 'opacity-100' : 'opacity-30'
+              showButton ? 'opacity-100' : 'opacity-80'
             }`}
             onClick={(e) => {
               e.stopPropagation();
