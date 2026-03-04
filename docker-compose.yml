@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  # ─────────────────────────────────────────────
+  # MySQL Database
+  # ─────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: kliq-crm-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: kliqrootpassword
+      MYSQL_DATABASE: kliq_crm
+      MYSQL_USER: kliq
+      MYSQL_PASSWORD: kliqpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - kliq_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────────
+  # KLIQ CRM Application
+  # ─────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: kliq-crm-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: mysql://kliq:kliqpassword@db:3306/kliq_crm
+      SESSION_SECRET: change-this-to-a-secure-random-string
+      # Google OAuth (add your credentials here)
+      # GOOGLE_CLIENT_ID: your-google-client-id
+      # GOOGLE_CLIENT_SECRET: your-google-client-secret
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  kliq_db_data:

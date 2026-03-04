@@ -1,0 +1,35 @@
+# Dependencies (will be installed inside container)
+node_modules/
+
+# Build output (will be regenerated inside container)
+dist/
+
+# Git files
+.git/
+.gitignore
+
+# Environment files (inject via Docker/Railway at runtime)
+.env
+.env.*
+!.env.example
+
+# Documentation
+*.md
+!README.md
+
+# Development config files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+*.test.ts
+*.spec.ts
+__tests__/
+
+# Logs
+*.log
+logs/
